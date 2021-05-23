@@ -199,14 +199,11 @@ int main(void)
 		case PAGE0:
 			Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
 			break;
-<<<<<<< Updated upstream
 		case NEXTION_SD:
 			Nextion_SDRun(&sd_card, buf_nxt_r, &nx_dowysylki_sd);
 			Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
-=======
 		case PAGE1:
 			Nextion_SendValue(buf_nxt_r, &nx_dowysylki_r, &Uart2_free);
->>>>>>> Stashed changes
 			break;
 		default:
 			IdleRun();

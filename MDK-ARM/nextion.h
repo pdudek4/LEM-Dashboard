@@ -9,20 +9,6 @@
 #define CAN_FRAME_COUNT 4
 
 #define CAN_ADR_ZAPI0 0x300
-<<<<<<< Updated upstream
-#define CAN_ADR_ZAPI1 0x301
-#define CAN_ADR_ZAPI2 0x302
-#define CAN_ADR_ZAPI3 0x303
-
-#define CAN_ADR_BATT0 0x400
-#define CAN_ADR_BATT1 0x401
-
-#define CAN_ADR_SENS0 0x500
-#define CAN_ADR_SENS1 0x501
-#define CAN_ADR_SENS2 0x502
-#define CAN_ADR_SENS3 0x503
-#define CAN_ADR_SENS4 0x504
-=======
 #define CAN_ADR_ZAPI1 0x310
 
 #define CAN_ADR_BMS0 	0x400
@@ -36,10 +22,10 @@
 #define CAN_ADR_SENS2 0x620
 #define CAN_ADR_SENS3 0x630
 #define CAN_ADR_SENS4 0x640
->>>>>>> Stashed changes
 
 #define NX_BUTTON_SD 0x01
 
+extern CAN_HandleTypeDef hcan1;
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim2;
 extern TIM_HandleTypeDef htim3;
@@ -111,7 +97,7 @@ void SDkoniec(sd_card_t* sd_card);
 void LED0_Off();
 void LED0_On();
 
-
+void CanGetMsgData(uint8_t* aData);
 
 
 #endif

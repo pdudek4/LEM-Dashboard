@@ -1,10 +1,7 @@
 #include "nextion.h"
 #include <string.h>
 
-<<<<<<< Updated upstream
-=======
 //#define _DEBUG
->>>>>>> Stashed changes
 /*===============TO DO===============================================
 -dodaj struktury GPS, AKCEL i do buforów nxt wraz z ich rozmiarem i do wysylki ktory bedzie przeliczany w processdata
 -dodaj odczyt zasilania z CANa od plytki baterii i sterowanie dioda na zlaczu nextiona
@@ -156,8 +153,11 @@ void AddToBuffor_SD(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wys
 
 void IdleRun(void)
 {
+	//docelowo migaj jakas dioda wirtualna na LCD
+	#ifdef _DEBUG
 	HAL_UART_Transmit_IT(&huart2, "IDLE\r\n", 6);	//DEBUG
 	HAL_Delay(2000);
+	#endif
 	
 }
 
@@ -186,8 +186,10 @@ void Nextion_SDRun(sd_card_t* sd_card, char* buf_nxt, volatile bool* do_wysyl)
 		f_write(&(sd_card->myFile), buf_nxt, strlen(buf_nxt), &(sd_card->myBytes));
 		f_sync(&(sd_card->myFile)); //zapis fat zapobiega utracie danych
 
-						HAL_UART_Transmit_IT(&huart2, "SD_Run\r\n", 8);
 		*do_wysyl = false;
+		#ifdef _DEBUG
+			HAL_UART_Transmit_IT(&huart2, "SD_Run\r\n", 8);
+		#endif
 	}
 }
 
@@ -272,15 +274,6 @@ void SDInit(sd_card_t* sd_card)
 			HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
 		}
 	}
-<<<<<<< Updated upstream
-	else{
-		HAL_UART_Transmit(&huart2, "vis p1,0", 8, 150);		//usuniecie pierwszej ikonki z lcd
-		HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
-	}
-	__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
-	HAL_TIM_Base_Start_IT(&htim1);
-							HAL_UART_Transmit(&huart2, "SD_Init\r\n", 9, 200);
-=======
 
 	__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
 	HAL_TIM_Base_Start_IT(&htim2);
@@ -288,7 +281,6 @@ void SDInit(sd_card_t* sd_card)
 	#ifdef _DEBUG
 		 HAL_UART_Transmit(&huart2, "SD_Init\r\n", 9, 200);
 	#endif
->>>>>>> Stashed changes
 }
 
 void SDkoniec(sd_card_t* sd_card)
@@ -307,12 +299,12 @@ void SDkoniec(sd_card_t* sd_card)
 	nr_pliku++;
   sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
   strcpy(sd_card->SD_nazwapliku, nowa_nazwa);
-				HAL_UART_Transmit_IT(&huart2, "SD_Koniec\r\n", 11);
+	
+	#ifdef _DEBUG
+		 HAL_UART_Transmit_IT(&huart2, "SD_Koniec\r\n", 11);
+	#endif
 }
 
-<<<<<<< Updated upstream
-
-=======
 void LED0_Off()
 {
 	HAL_UART_Transmit(&huart2, "vis p0,0", 8, 150);
@@ -340,8 +332,6 @@ void CanGetMsgData(uint8_t* aData)
 	/* Release RX FIFO 0 */
   SET_BIT(hcan1.Instance->RF0R, CAN_RF0R_RFOM0);
 }
->>>>>>> Stashed changes
-
 
 
 
