@@ -92,13 +92,14 @@ uint8_t CAN_ramka[CAN_FRAME_COUNT][8];
 uint8_t CAN_data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 char nx_endline[3] = {0xff, 0xff, 0xff};
-char buf_nxt_p[60];
-char buf_nxt_r[150];
+char buf_nxt_p[80];
+char buf_nxt_r[190];
 
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
 dash_state_t dash_state = IDLE;
+dash_page_t dash_page = PAGE0;
 
 uint8_t Uart2_buf_rx[10]; //odbiór z nextiona
 uint8_t Uart2_zn;
@@ -147,9 +148,9 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	
-	//CAN_filterConfig();
-	//HAL_CAN_Start(&hcan1);
-	//HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // musi byc!!
+	CAN_filterConfig();
+	HAL_CAN_Start(&hcan1);
+	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // musi byc!!
 	HAL_TIM_Base_Start_IT(&htim1); //4 Hz docelowo, wazniejsze onformacje na dash
 	//HAL_TIM_Base_Start_IT(&htim2); //10 Hz zapis na SD
 	//HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
@@ -162,6 +163,21 @@ int main(void)
 //		CANTxh.RTR = CAN_RTR_DATA;
   sd_card.init = false;
 	strcpy(sd_card.SD_nazwapliku, "1.TXT\0");
+	dash_state = IDLE;
+	dash_page = PAGE0;
+			nx_val.amps=0;
+			nx_val.bat_percent=0;
+			nx_val.bat_voltage=0;
+			nx_val.controller_temp=0;
+			nx_val.engine_temp=0;
+			nx_val.rpm=0;
+			nx_val.speed=0;
+			nx_val.bat_temps[0]=0;
+			nx_val.bat_temps[1]=0;
+			nx_val.bat_temps[2]=0;
+			nx_val.bat_temps[3]=0;
+			nx_val.bat_temps[4]=0;
+			nx_val.bat_temps[5]=0;
 	
 	/*f_mount(&(sd_card.myFatFS), SDPath, 1);
 	f_open(&(sd_card.myFile), sd_card.SD_nazwapliku, FA_WRITE | FA_CREATE_ALWAYS);
@@ -175,23 +191,28 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while(1)
   {
-		switch(dash_state){
-		case IDLE:
+		switch(dash_page){
+		case PAGE2:
 		  IdleRun();
 			break;
-		case NEXTION_R:
-			Nextion_SendValue(buf_nxt_r, &nx_dowysylki_r, &Uart2_free);
-		case NEXTION_P:
+		case PAGE3:
+		case PAGE0:
 			Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
 			break;
+<<<<<<< Updated upstream
 		case NEXTION_SD:
 			Nextion_SDRun(&sd_card, buf_nxt_r, &nx_dowysylki_sd);
 			Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
+=======
+		case PAGE1:
+			Nextion_SendValue(buf_nxt_r, &nx_dowysylki_r, &Uart2_free);
+>>>>>>> Stashed changes
 			break;
 		default:
 			IdleRun();
 			break;
 	}
+	if(dash_state == NEXTION_SD) Nextion_SDRun(&sd_card, buf_nxt_r, &nx_dowysylki_sd);
 
 	
 		
@@ -385,7 +406,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7199;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9999;
+  htim2.Init.Period = 999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -470,7 +491,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -593,7 +614,7 @@ void CAN_filterConfig(void)
 	filterConfig.FilterActivation = ENABLE;
 	filterConfig.FilterFIFOAssignment = 0;
 	filterConfig.FilterIdHigh = (0x0300 << 5);
-	filterConfig.FilterIdLow = (0x0301 << 5);
+	filterConfig.FilterIdLow = (0x0310 << 5);
 	filterConfig.FilterMaskIdHigh = (0x0302 << 5);
 	filterConfig.FilterMaskIdLow = (0x0303 << 5);
 	filterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
@@ -616,7 +637,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		Uart2_ff++;
 	}
 	if(Uart2_ff == 3){
-		Process_uart(&dash_state, Uart2_buf_rx, &sd_card);
+		Process_uart(&dash_state, &dash_page, Uart2_buf_rx, &sd_card);
 		Uart2_ff = 0;
 		Uart2_i = 0;
 	}

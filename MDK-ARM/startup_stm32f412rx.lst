@@ -699,7 +699,7 @@ ARM Macro Assembler    Page 11
               00000000 
 Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M4.fp --apcs=int
 erwork --depend=dashboard_v1\startup_stm32f412rx.d -odashboard_v1\startup_stm32
-f412rx.o -I.\RTE\_Dashboard_v1 -ID:\Programy\Keil\Pack\ARM\CMSIS\5.6.0\CMSIS\Co
+f412rx.o -I.\RTE\_Dashboard_v1 -ID:\Programy\Keil\Pack\ARM\CMSIS\5.7.0\CMSIS\Co
 re\Include -ID:\Programy\Keil\Pack\Keil\STM32F4xx_DFP\2.14.0\Drivers\CMSIS\Devi
 ce\ST\STM32F4xx\Include --predefine="__EVAL SETA 1" --predefine="__MICROLIB SET
 A 1" --predefine="__UVISION_VERSION SETA 528" --predefine="_RTE_ SETA 1" --pred
