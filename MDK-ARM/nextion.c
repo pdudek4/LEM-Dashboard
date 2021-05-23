@@ -5,7 +5,7 @@
 /*===============TO DO===============================================
 -dodaj struktury GPS, AKCEL i do buforów nxt wraz z ich rozmiarem i do wysylki ktory bedzie przeliczany w processdata
 -dodaj odczyt zasilania z CANa od plytki baterii i sterowanie dioda na zlaczu nextiona
--dodaj wyyslanie napiec z bmsa (wartosci 'x' float x.yy)
+-dodaj wyslanie napiec z bmsa (wartosci 'x' float x.yy) processData z nowym timerem o malej f
 ====================================================================*/
 char k[3] = {0xff, 0xff, 0xff};
 
@@ -53,6 +53,30 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 //		nx_val->bat_temps[5] = (*CAN_ramka)[1][5];
 }
 
+void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
+{	
+
+	nx_val->speed++;// = (*CAN_ramka)[0][0];
+	if(nx_val->speed >200) nx_val->speed = 0;
+	nx_val->rpm+=5;// = (*CAN_ramka)[0][1];
+	if(nx_val->rpm > 7000) nx_val->rpm = 0;
+	nx_val->power++;// = (*CAN_ramka)[0][2];
+	nx_val->amps+=5;// (*CAN_ramka)[0][3];
+	if(nx_val->amps > 255) nx_val->amps = 0;
+	nx_val->bat_percent++;// = (*CAN_ramka)[0][4];
+	if( nx_val->bat_percent > 99) nx_val->bat_percent = 0;
+	nx_val->bat_voltage = 112;//(*CAN_ramka)[0][5];
+	nx_val->engine_temp = 50;//(*CAN_ramka)[0][6];
+	nx_val->controller_temp = 60;//(*CAN_ramka)[0][7];
+
+//		nx_val->bat_temps[0] = (*CAN_ramka)[1][0];
+//		nx_val->bat_temps[1] = (*CAN_ramka)[1][1];
+//		nx_val->bat_temps[2] = (*CAN_ramka)[1][2];
+//		nx_val->bat_temps[3] = (*CAN_ramka)[1][3];
+//		nx_val->bat_temps[4] = (*CAN_ramka)[1][4];
+//		nx_val->bat_temps[5] = (*CAN_ramka)[1][5];
+}
+
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
 	char value_c[16];
@@ -62,8 +86,8 @@ void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
   strcpy(buf_nxt, value_c);
 	
 	parameter[1]++;
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->rpm, 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->rpm, 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 	
 	parameter[1]++;
 	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->power, 0xff, 0xff, 0xff);
@@ -200,7 +224,7 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 		switch(Uart2_buf[2]){
 			case 0x0A:
 				if(NEXTION_SD == *dash_state){
-					HAL_TIM_Base_Stop_IT(&htim2);
+					//HAL_TIM_Base_Stop_IT(&htim2);
 					//dodaj zmienna spr stan czy napewno jest running (potwierdzenie otwarcia pliku)
 					SDkoniec(sd_card);
 					*dash_state = NEXTION_P;
@@ -210,8 +234,8 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 					sd_card->init = true;
 					*dash_state = NEXTION_SD;
 					LED0_On();
-					__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
-					HAL_TIM_Base_Start_IT(&htim2);
+//					__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
+//					HAL_TIM_Base_Start_IT(&htim2);
 				}
 			break;
 			default: 
@@ -285,7 +309,7 @@ void SDInit(sd_card_t* sd_card)
 
 void SDkoniec(sd_card_t* sd_card)
 {
-	HAL_TIM_Base_Stop_IT(&htim2);
+	//HAL_TIM_Base_Stop_IT(&htim2);
 	char nowa_nazwa[7];
   static int nr_pliku = 1;
 

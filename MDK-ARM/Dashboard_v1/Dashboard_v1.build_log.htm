@@ -27,18 +27,26 @@ Project File Date:  05/23/2021
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'D:\Programy\Keil\ARM\ARMCC\Bin'
 Build target 'Dashboard_v1'
-compiling main.c...
-..\MDK-ARM\nextion.h(97): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
+compiling nextion.c...
+nextion.h(99): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
   void LED0_Off();
-..\MDK-ARM\nextion.h(98): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
+nextion.h(100): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
   void LED0_On();
-..\MDK-ARM\nextion.h(103): warning:  #1-D: last line of file ends without a newline
+nextion.h(105): warning:  #1-D: last line of file ends without a newline
   #endif
-../Src/main.c: 3 warnings, 0 errors
+nextion.c(85): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->speed, 0xff, 0xff, 0xff);
+nextion.c(112): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
+nextion.c(166): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+nextion.c(324): warning:  #223-D: function "sprintf" declared implicitly
+    sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
+nextion.c: 7 warnings, 0 errors
 linking...
-Program Size: Code=23488 RO-data=692 RW-data=48 ZI-data=18448  
+Program Size: Code=23496 RO-data=692 RW-data=48 ZI-data=18632  
 FromELF: creating hex file...
-"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 3 Warning(s).
+"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 7 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -61,7 +69,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.4.0
-Build Time Elapsed:  00:00:07
+Build Time Elapsed:  00:00:08
 </pre>
 </body>
 </html>

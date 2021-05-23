@@ -94,6 +94,7 @@ uint8_t CAN_data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 char nx_endline[3] = {0xff, 0xff, 0xff};
 char buf_nxt_p[80];
 char buf_nxt_r[190];
+char buf_sd[190];
 
 
 nextion_uart_t nx_val;
@@ -152,7 +153,7 @@ int main(void)
 	HAL_CAN_Start(&hcan1);
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // musi byc!!
 	HAL_TIM_Base_Start_IT(&htim1); //4 Hz docelowo, wazniejsze onformacje na dash
-	//HAL_TIM_Base_Start_IT(&htim2); //10 Hz zapis na SD
+	HAL_TIM_Base_Start_IT(&htim2); //10 Hz zapis na SD
 	//HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
 	HAL_UART_Receive_IT(&huart2, &Uart2_zn, 1);	//odbior z nextiona
 	
@@ -206,7 +207,7 @@ int main(void)
 			IdleRun();
 			break;
 	}
-	if(dash_state == NEXTION_SD) Nextion_SDRun(&sd_card, buf_nxt_r, &nx_dowysylki_sd);
+	if(dash_state == NEXTION_SD) Nextion_SDRun(&sd_card, buf_sd, &nx_dowysylki_sd);
 
 	
 		
@@ -485,7 +486,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 9600;
+  huart2.Init.BaudRate = 115200;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -559,23 +560,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(htim->Instance == TIM1)
 	{
 		//wywolanie funkcji przetwarzajacej dane
-		ProcessData_P(&nx_val, &CAN_ramka);
+		//ProcessData_P(&nx_val, &CAN_ramka);
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
+		AddToBuffor_SD(buf_sd, &nx_val, &nx_dowysylki_sd);	
 	}
 	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
 	{
 		//wywolanie funkcji przetwarzajacej dane
-		ProcessData_SD(&nx_val, &CAN_ramka);
-		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
-		AddToBuffor_SD(buf_nxt_r, &nx_val, &nx_dowysylki_sd);		
+		ProcessData_All(&nx_val, &CAN_ramka);
+		//wywolanie funkcji strcat i dodajacej dane do buf_sd
+			
 	}
 	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE<<<<<<<<<<<<<<
 	if(htim->Instance == TIM3)
 	{
 		//wywolanie funkcji przetwarzajacej dane
-		ProcessData_R(&nx_val, &CAN_ramka);
+		//ProcessData_R(&nx_val, &CAN_ramka);
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r);
 	}
