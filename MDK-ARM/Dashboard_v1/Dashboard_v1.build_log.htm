@@ -34,26 +34,11 @@ compiling main.c...
   void LED0_On();
 ..\MDK-ARM\nextion.h(103): warning:  #1-D: last line of file ends without a newline
   #endif
-../Src/main.c(202): error:  #2706: case label value has already appeared in this switch at line 198
-  		case NEXTION_SD:
-../Src/main.c: 3 warnings, 1 error
-compiling nextion.c...
-nextion.h(97): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
-  void LED0_Off();
-nextion.h(98): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
-  void LED0_On();
-nextion.h(103): warning:  #1-D: last line of file ends without a newline
-  #endif
-nextion.c(61): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->speed, 0xff, 0xff, 0xff);
-nextion.c(88): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
-nextion.c(142): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
-nextion.c(300): warning:  #223-D: function "sprintf" declared implicitly
-    sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
-nextion.c: 7 warnings, 0 errors
-"Dashboard_v1\Dashboard_v1.axf" - 1 Error(s), 10 Warning(s).
+../Src/main.c: 3 warnings, 0 errors
+linking...
+Program Size: Code=23488 RO-data=692 RW-data=48 ZI-data=18448  
+FromELF: creating hex file...
+"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 3 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -76,8 +61,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.4.0
-Target not created.
-Build Time Elapsed:  00:00:10
+Build Time Elapsed:  00:00:07
 </pre>
 </body>
 </html>
