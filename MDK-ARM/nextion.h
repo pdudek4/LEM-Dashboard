@@ -8,8 +8,8 @@
 
 #define CAN_FRAME_COUNT 4
 
-#define CAN_ADR_ZAPI0 0x300
-#define CAN_ADR_ZAPI1 0x310
+#define CAN_ADR_ZAPI0 0x388
+#define CAN_ADR_ZAPI1 0x288
 
 #define CAN_ADR_BMS0 	0x400
 #define CAN_ADR_BMS1	0x410
@@ -23,7 +23,12 @@
 #define CAN_ADR_SENS3 0x630
 #define CAN_ADR_SENS4 0x640
 
-#define NX_BUTTON_SD 0x01
+#define NX_BUTTON_SD 	0x01
+
+#define Vol_nom				117
+#define Vol_presc			(1000/Vol_nom)
+#define PRZELOZENIE		4.615
+#define PROMIEN_KOLA	0.30
 
 extern CAN_HandleTypeDef hcan1;
 extern TIM_HandleTypeDef htim1;

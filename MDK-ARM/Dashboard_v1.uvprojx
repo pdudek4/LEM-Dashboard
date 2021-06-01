@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F412Rx,USE_HAL_DRIVER,STM32F412Rx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;        C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/STM32F4xx_HAL_Driver/Inc;        C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;        C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Middlewares/Third_Party/FatFs/src;        C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include;        C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/CMSIS/Include;        ..\MDK-ARM</IncludePath>
+              <IncludePath>../Inc;         C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/STM32F4xx_HAL_Driver/Inc;         C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;         C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Middlewares/Third_Party/FatFs/src;         C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/CMSIS/Device/ST/STM32F4xx/Include;         C:/Users/Przemek/STM32Cube/Repository/STM32Cube_FW_F4_V1.24.1/Drivers/CMSIS/Include;         ..\MDK-ARM</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

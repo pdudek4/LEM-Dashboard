@@ -56,18 +56,18 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {	
 
-	nx_val->speed++;// = (*CAN_ramka)[0][0];
-	if(nx_val->speed >200) nx_val->speed = 0;
-	nx_val->rpm+=5;// = (*CAN_ramka)[0][1];
-	if(nx_val->rpm > 7000) nx_val->rpm = 0;
-	nx_val->power++;// = (*CAN_ramka)[0][2];
-	nx_val->amps+=5;// (*CAN_ramka)[0][3];
-	if(nx_val->amps > 255) nx_val->amps = 0;
-	nx_val->bat_percent++;// = (*CAN_ramka)[0][4];
-	if( nx_val->bat_percent > 99) nx_val->bat_percent = 0;
-	nx_val->bat_voltage = 112;//(*CAN_ramka)[0][5];
-	nx_val->engine_temp = 50;//(*CAN_ramka)[0][6];
-	nx_val->controller_temp = 60;//(*CAN_ramka)[0][7];
+//	nx_val->speed++;// = (*CAN_ramka)[0][0];
+//	if(nx_val->speed >200) nx_val->speed = 0;
+//	nx_val->rpm+=5;// = (*CAN_ramka)[0][1];
+//	if(nx_val->rpm > 7000) nx_val->rpm = 0;
+//	nx_val->power++;// = (*CAN_ramka)[0][2];
+//	nx_val->amps+=5;// (*CAN_ramka)[0][3];
+//	if(nx_val->amps > 255) nx_val->amps = 0;
+//	nx_val->bat_percent++;// = (*CAN_ramka)[0][4];
+//	if( nx_val->bat_percent > 99) nx_val->bat_percent = 0;
+//	nx_val->bat_voltage = 112;//(*CAN_ramka)[0][5];
+//	nx_val->engine_temp = 50;//(*CAN_ramka)[0][6];
+//	nx_val->controller_temp = 60;//(*CAN_ramka)[0][7];
 
 //		nx_val->bat_temps[0] = (*CAN_ramka)[1][0];
 //		nx_val->bat_temps[1] = (*CAN_ramka)[1][1];
@@ -75,6 +75,23 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 //		nx_val->bat_temps[3] = (*CAN_ramka)[1][3];
 //		nx_val->bat_temps[4] = (*CAN_ramka)[1][4];
 //		nx_val->bat_temps[5] = (*CAN_ramka)[1][5];
+	uint16_t speedtmp = ((*CAN_ramka)[0][2] << 8) + (*CAN_ramka)[0][3];
+	unsigned int sptmp;
+	
+	nx_val->rpm = speedtmp * 0.15;
+	sptmp = nx_val->rpm * 0.0314;
+	nx_val->speed = (uint8_t) sptmp;
+	
+//	nx_val->engine_temp = (*CAN_ramka)[1][2] - 40;
+//	if (nx_val->engine_temp < 0) nx_val->engine_temp = 1;
+//	
+//	nx_val->controller_temp = (*CAN_ramka)[1][3] - 40;
+//	if (nx_val->controller_temp < 0) nx_val->controller_temp = 2;
+//	
+//	nx_val->bat_percent = (*CAN_ramka)[1][4];
+//	nx_val->amps = ((*CAN_ramka)[1][5]) * 2;
+//	nx_val->bat_voltage = ((*CAN_ramka)[1][6]) * Vol_presc;
+	
 }
 
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)

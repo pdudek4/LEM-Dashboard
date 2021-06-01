@@ -327,7 +327,7 @@ static void MX_SDIO_SD_Init(void)
   hsd.Init.ClockPowerSave = SDIO_CLOCK_POWER_SAVE_DISABLE;
   hsd.Init.BusWide = SDIO_BUS_WIDE_1B;
   hsd.Init.HardwareFlowControl = SDIO_HARDWARE_FLOW_CONTROL_DISABLE;
-  hsd.Init.ClockDiv = 2;
+  hsd.Init.ClockDiv = 3;
   /* USER CODE BEGIN SDIO_Init 2 */
 
   /* USER CODE END SDIO_Init 2 */
@@ -401,7 +401,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7199;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 999;
+  htim2.Init.Period = 9999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -609,8 +609,8 @@ void CAN_filterConfig(void)
 	filterConfig.FilterBank = 1;
 	filterConfig.FilterActivation = ENABLE;
 	filterConfig.FilterFIFOAssignment = 0;
-	filterConfig.FilterIdHigh = (0x0300 << 5);
-	filterConfig.FilterIdLow = (0x0310 << 5);
+	filterConfig.FilterIdHigh = (0x0388 << 5);
+	filterConfig.FilterIdLow = (0x0288 << 5);
 	filterConfig.FilterMaskIdHigh = (0x0302 << 5);
 	filterConfig.FilterMaskIdLow = (0x0303 << 5);
 	filterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
