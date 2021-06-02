@@ -108,6 +108,8 @@ volatile uint8_t Uart2_i;
 volatile uint8_t Uart2_ff;
 volatile bool Uart2_free = true;
 
+CAN_TxHeaderTypeDef txCAN;
+int volt; 
 /* USER CODE END 0 */
 
 /**
@@ -117,7 +119,10 @@ volatile bool Uart2_free = true;
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	txCAN.DLC = 8;
+	txCAN.StdId = 0x608;
+	txCAN.RTR = CAN_RTR_DATA;
+	txCAN.IDE = CAN_ID_STD;
   /* USER CODE END 1 */
   
 
@@ -355,7 +360,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 7199;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 2499;
+  htim1.Init.Period = 999;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -556,7 +561,11 @@ static void MX_GPIO_Init(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE<<<<<<<<<<<<<<<
+	static int counter =0;
+	uint32_t mailbox;
+	int ID = 0x608;
+	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
+	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 4 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
 		//wywolanie funkcji przetwarzajacej dane
@@ -564,8 +573,27 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
 		AddToBuffor_SD(buf_sd, &nx_val, &nx_dowysylki_sd);	
+		
+		 
+	//bat voltage
+		if(counter == 1){
+			frame[1] = 0x02;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+	//temperature
+		else if(counter == 5){
+			frame[1] = 0x11;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+	//motor temperature
+		else if(counter == 9){
+			frame[1] = 0x12;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+		counter++;
+		if( counter == 13) counter = 0;
 	}
-	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD<<<<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD 10 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
 	{
 		//wywolanie funkcji przetwarzajacej dane
@@ -586,12 +614,35 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
+	int curr, temp, temps;
+	
 	//sprawdzanie identyfikatora odebranej wiadmosci
 	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI0){
 		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[0]);
 	}
-	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI1){
+	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI2){
 		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[1]);
+		
+		switch (CAN_ramka[1][1]){
+			case 0x02:
+			//battery voltage *100
+			volt = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
+			nx_val.bat_voltage = (uint8_t) volt;
+				break;
+//			case 0x08:
+//			//current RMS [A]
+//			curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
+//			nx_val.amps = (uint8_t) curr;
+//				break;
+			case 0x11:
+			//temperature
+			nx_val.controller_temp = CAN_ramka[1][4];
+				break;
+			case 0x12:
+			//motor temperature
+			nx_val.engine_temp = CAN_ramka[1][4];
+				break;			
+		}
 	}	
 
 	
@@ -610,7 +661,7 @@ void CAN_filterConfig(void)
 	filterConfig.FilterActivation = ENABLE;
 	filterConfig.FilterFIFOAssignment = 0;
 	filterConfig.FilterIdHigh = (0x0388 << 5);
-	filterConfig.FilterIdLow = (0x0288 << 5);
+	filterConfig.FilterIdLow = (0x0588 << 5);
 	filterConfig.FilterMaskIdHigh = (0x0302 << 5);
 	filterConfig.FilterMaskIdLow = (0x0303 << 5);
 	filterConfig.FilterMode = CAN_FILTERMODE_IDLIST;

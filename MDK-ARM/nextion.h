@@ -10,6 +10,7 @@
 
 #define CAN_ADR_ZAPI0 0x388
 #define CAN_ADR_ZAPI1 0x288
+#define CAN_ADR_ZAPI2 0x588
 
 #define CAN_ADR_BMS0 	0x400
 #define CAN_ADR_BMS1	0x410
@@ -42,7 +43,7 @@ typedef struct {
 	uint8_t speed;						//
 	uint16_t rpm;
 	uint8_t power; 						//
-	uint8_t amps;	
+	uint16_t amps;
 	uint8_t bat_percent;			//
 	uint8_t bat_voltage;
 	uint8_t engine_temp;			//

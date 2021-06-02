@@ -55,7 +55,7 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {	
-
+	float fbat;
 //	nx_val->speed++;// = (*CAN_ramka)[0][0];
 //	if(nx_val->speed >200) nx_val->speed = 0;
 //	nx_val->rpm+=5;// = (*CAN_ramka)[0][1];
@@ -79,7 +79,8 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	unsigned int sptmp;
 	
 	nx_val->rpm = speedtmp * 0.15;
-	sptmp = nx_val->rpm * 0.0314;
+	//sptmp = nx_val->rpm * 0.0314;
+	sptmp = nx_val->rpm * 0.024572;
 	nx_val->speed = (uint8_t) sptmp;
 	
 //	nx_val->engine_temp = (*CAN_ramka)[1][2] - 40;
@@ -88,7 +89,9 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 //	nx_val->controller_temp = (*CAN_ramka)[1][3] - 40;
 //	if (nx_val->controller_temp < 0) nx_val->controller_temp = 2;
 //	
-//	nx_val->bat_percent = (*CAN_ramka)[1][4];
+	fbat = nx_val->bat_voltage/1.178;
+	nx_val->bat_percent = (uint8_t) fbat;
+
 //	nx_val->amps = ((*CAN_ramka)[1][5]) * 2;
 //	nx_val->bat_voltage = ((*CAN_ramka)[1][6]) * Vol_presc;
 	
@@ -129,9 +132,9 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
   strcpy(buf_nxt, value_c);
 	
-	//n3.val=
-	sprintf(value_c, "n3.val=%d%c%c%c", nx_val->power, 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
+//	//n3.val=
+//	sprintf(value_c, "n3.val=%d%c%c%c", nx_val->power, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
 	
 	//n4.val=
 	sprintf(value_c, "n4.val=%d%c%c%c", nx_val->engine_temp, 0xff, 0xff, 0xff);
@@ -141,37 +144,37 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 	sprintf(value_c, "n6.val=%d%c%c%c", nx_val->bat_voltage, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 	
-	//n7.val=
-	sprintf(value_c, "n7.val=%d%c%c%c", nx_val->amps, 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
+//	//n7.val=
+//	sprintf(value_c, "n7.val=%d%c%c%c", nx_val->amps, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
 	
 	//n8.val=
 	sprintf(value_c, "n8.val=%d%c%c%c", nx_val->controller_temp, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 
-	//n9.val=
-	sprintf(value_c, "n9.val=%d%c%c%c", nx_val->bat_temps[0], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
-	//n10.val=
-	sprintf(value_c, "n10.val=%d%c%c%c", nx_val->bat_temps[1], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
-	//n11.val=
-	sprintf(value_c, "n11.val=%d%c%c%c", nx_val->bat_temps[2], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
-	//n12.val=
-	sprintf(value_c, "n12.val=%d%c%c%c", nx_val->bat_temps[3], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
-	//n13.val=
-	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->bat_temps[4], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
-	//n14.val=
-	sprintf(value_c, "n14.val=%d%c%c%c", nx_val->bat_temps[5], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
+//	//n9.val=
+//	sprintf(value_c, "n9.val=%d%c%c%c", nx_val->bat_temps[0], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	//n10.val=
+//	sprintf(value_c, "n10.val=%d%c%c%c", nx_val->bat_temps[1], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	//n11.val=
+//	sprintf(value_c, "n11.val=%d%c%c%c", nx_val->bat_temps[2], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	//n12.val=
+//	sprintf(value_c, "n12.val=%d%c%c%c", nx_val->bat_temps[3], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	//n13.val=
+//	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->bat_temps[4], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	//n14.val=
+//	sprintf(value_c, "n14.val=%d%c%c%c", nx_val->bat_temps[5], 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
 
 	*do_wysyl = true;
 }
@@ -180,13 +183,11 @@ void AddToBuffor_SD(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wys
 {
 	//dodaj parametry zapisywane na SD	
 	//----------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d\r\n",
 	/*			1 				   				2 										3										4												5					*/ 			
-	nx_val->speed, nx_val->bat_voltage, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_temps[0],
+	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_percent,
 	/*			6 				   				7 										8										9												10					*/
-	nx_val->bat_percent, nx_val->bat_voltage, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_temps[0],
-	/*			11 				   				12 										13									14											15					*/
-	nx_val->bat_percent, nx_val->bat_voltage, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_temps[0]);
+	nx_val->bat_voltage);
 
 	*do_wysyl = true;
 }
