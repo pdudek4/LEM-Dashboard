@@ -8,7 +8,7 @@
 -dodaj wyslanie napiec z bmsa (wartosci 'x' float x.yy) processData z nowym timerem o malej f
 ====================================================================*/
 char k[3] = {0xff, 0xff, 0xff};
-
+ /*
 void ProcessData_P(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {
 	//algorytm przeliczenia danych z uint8_t do wartosci parametrow
@@ -52,75 +52,76 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 //		nx_val->bat_temps[4] = (*CAN_ramka)[1][4];
 //		nx_val->bat_temps[5] = (*CAN_ramka)[1][5];
 }
-
+*/
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {	
 	float fbat;
-//	nx_val->speed++;// = (*CAN_ramka)[0][0];
-//	if(nx_val->speed >200) nx_val->speed = 0;
-//	nx_val->rpm+=5;// = (*CAN_ramka)[0][1];
-//	if(nx_val->rpm > 7000) nx_val->rpm = 0;
-//	nx_val->power++;// = (*CAN_ramka)[0][2];
-//	nx_val->amps+=5;// (*CAN_ramka)[0][3];
-//	if(nx_val->amps > 255) nx_val->amps = 0;
-//	nx_val->bat_percent++;// = (*CAN_ramka)[0][4];
-//	if( nx_val->bat_percent > 99) nx_val->bat_percent = 0;
-//	nx_val->bat_voltage = 112;//(*CAN_ramka)[0][5];
-//	nx_val->engine_temp = 50;//(*CAN_ramka)[0][6];
-//	nx_val->controller_temp = 60;//(*CAN_ramka)[0][7];
 
-//		nx_val->bat_temps[0] = (*CAN_ramka)[1][0];
-//		nx_val->bat_temps[1] = (*CAN_ramka)[1][1];
-//		nx_val->bat_temps[2] = (*CAN_ramka)[1][2];
-//		nx_val->bat_temps[3] = (*CAN_ramka)[1][3];
-//		nx_val->bat_temps[4] = (*CAN_ramka)[1][4];
-//		nx_val->bat_temps[5] = (*CAN_ramka)[1][5];
 	uint16_t speedtmp = ((*CAN_ramka)[0][2] << 8) + (*CAN_ramka)[0][3];
 	unsigned int sptmp;
 	
 	nx_val->rpm = speedtmp * 0.15;
-	//sptmp = nx_val->rpm * 0.0314;
 	sptmp = nx_val->rpm * 0.024572;
 	nx_val->speed = (uint8_t) sptmp;
 	
-//	nx_val->engine_temp = (*CAN_ramka)[1][2] - 40;
-//	if (nx_val->engine_temp < 0) nx_val->engine_temp = 1;
-//	
-//	nx_val->controller_temp = (*CAN_ramka)[1][3] - 40;
-//	if (nx_val->controller_temp < 0) nx_val->controller_temp = 2;
-//	
-	fbat = nx_val->bat_voltage/1.178;
+	fbat = (nx_val->bat_voltage-84)*3.05;
 	nx_val->bat_percent = (uint8_t) fbat;
 
-//	nx_val->amps = ((*CAN_ramka)[1][5]) * 2;
-//	nx_val->bat_voltage = ((*CAN_ramka)[1][6]) * Vol_presc;
+	nx_val->susp_front.min = ((*CAN_ramka)[3][1] << 8) + (*CAN_ramka)[3][0];
+	nx_val->susp_front.max = ((*CAN_ramka)[3][3] << 8) + (*CAN_ramka)[3][2];
+	nx_val->susp_front.avg = ((*CAN_ramka)[3][5] << 8) + (*CAN_ramka)[3][4];
+	
+	nx_val->susp_rear.min = ((*CAN_ramka)[2][1] << 8) + (*CAN_ramka)[2][0];
+	nx_val->susp_rear.max = ((*CAN_ramka)[2][3] << 8) + (*CAN_ramka)[2][2];
+	nx_val->susp_rear.avg = ((*CAN_ramka)[2][5] << 8) + (*CAN_ramka)[2][4];
+	
+	nx_val->pdm_val.status_field = (*CAN_ramka)[5][0];
+	nx_val->pdm_val.temps[0] = (*CAN_ramka)[5][1];
+	nx_val->pdm_val.temps[1] = (*CAN_ramka)[5][2];
+	nx_val->pdm_val.temps[2] = (*CAN_ramka)[5][3];
+	nx_val->pdm_val.temps[3] = (*CAN_ramka)[5][4];
+	nx_val->pdm_val.temps[4] = (*CAN_ramka)[5][5];
+	nx_val->pdm_val.imd_resistance = ((*CAN_ramka)[5][7] << 8) + (*CAN_ramka)[5][6];
 	
 }
 
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
 	char value_c[16];
-	char parameter[8] = "n1.val=";
+/* 	char parameter[8] = "n1.val=";
 	
-	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->speed, 0xff, 0xff, 0xff);
+//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->speed, 0xff, 0xff, 0xff);
+//  strcpy(buf_nxt, value_c);
+//	
+//	parameter[1]++;
+//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->rpm, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	parameter[1]++;
+//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->power, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	parameter[1]++;
+//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->engine_temp, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+//	
+//	parameter[1]++;
+//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->bat_percent, 0xff, 0xff, 0xff);
+//  strcat(buf_nxt, value_c);
+*/
+
+	sprintf(value_c, "n1.val=%d%c%c%c", nx_val->speed, 0xff, 0xff, 0xff);
   strcpy(buf_nxt, value_c);
 	
-	parameter[1]++;
-	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->rpm, 0xff, 0xff, 0xff);
+	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 	
-	parameter[1]++;
-	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->power, 0xff, 0xff, 0xff);
+	sprintf(value_c, "n4.val=%d%c%c%c", nx_val->engine_temp, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
-	
-	parameter[1]++;
-	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->engine_temp, 0xff, 0xff, 0xff);
+
+  sprintf(value_c, "n5.val=%d%c%c%c", nx_val->bat_percent, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
-	
-	parameter[1]++;
-	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->bat_percent, 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
-	
+
 	*do_wysyl = true;
 }
 
@@ -153,28 +154,24 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
   strcat(buf_nxt, value_c);
 
 //	//n9.val=
-//	sprintf(value_c, "n9.val=%d%c%c%c", nx_val->bat_temps[0], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "n9.val=%d%c%c%c", nx_val->pdm_val.temps[0], 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 //	
 //	//n10.val=
-//	sprintf(value_c, "n10.val=%d%c%c%c", nx_val->bat_temps[1], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "n10.val=%d%c%c%c", nx_val->pdm_val.temps[1], 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 //	
 //	//n11.val=
-//	sprintf(value_c, "n11.val=%d%c%c%c", nx_val->bat_temps[2], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "n11.val=%d%c%c%c", nx_val->pdm_val.temps[2], 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 //	
 //	//n12.val=
-//	sprintf(value_c, "n12.val=%d%c%c%c", nx_val->bat_temps[3], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "n12.val=%d%c%c%c", nx_val->pdm_val.temps[3], 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 //	
 //	//n13.val=
-//	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->bat_temps[4], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
-//	
-//	//n14.val=
-//	sprintf(value_c, "n14.val=%d%c%c%c", nx_val->bat_temps[5], 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
+	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->pdm_val.temps[4], 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 
 	*do_wysyl = true;
 }
@@ -183,12 +180,15 @@ void AddToBuffor_SD(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wys
 {
 	//dodaj parametry zapisywane na SD	
 	//----------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d\r\n",
-	/*			1 				   				2 										3										4												5					*/ 			
-	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_percent,
-	/*			6 				   				7 										8										9												10					*/
-	nx_val->bat_voltage);
-
+	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+	/*			1 				 	2 								3									  	 4												5					*/ 			
+	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_voltage,
+	/*			6 				   			          	7 										8				        */
+	nx_val->susp_front.min, nx_val->susp_front.avg, nx_val->susp_front.max,
+	/*			9 				   				10 										      11	  		 		     */
+	nx_val->susp_rear.min, nx_val->susp_rear.avg, nx_val->susp_rear.max,
+	/*			12 				   				13 										      14	  		 		     */
+	nx_val->pdm_val.temps[0], nx_val->pdm_val.temps[1], nx_val->pdm_val.temps[2]);
 	*do_wysyl = true;
 }
 
@@ -241,6 +241,7 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 	if(Uart2_buf[0] == 0x65){
 		switch(Uart2_buf[2]){
 			case 0x0A:
+			//case 0x08:
 				if(NEXTION_SD == *dash_state){
 					//HAL_TIM_Base_Stop_IT(&htim2);
 					//dodaj zmienna spr stan czy napewno jest running (potwierdzenie otwarcia pliku)
@@ -264,33 +265,33 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 	else if(Uart2_buf[0] == 0x66){
 		switch(Uart2_buf[1]){
 			case 0x00:
-				HAL_TIM_Base_Stop_IT(&htim3);
-				__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+				//HAL_TIM_Base_Stop_IT(&htim3);
+				//__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
 				*dash_page = PAGE0;
 				if( *dash_state == NEXTION_SD ){
 					LED0_On();
 				}
-				HAL_TIM_Base_Start_IT(&htim1);
+				//HAL_TIM_Base_Start_IT(&htim1);
 				break;
 			case 0x01:
-				HAL_TIM_Base_Stop_IT(&htim1);
-				__HAL_TIM_CLEAR_FLAG(&htim3, TIM_FLAG_UPDATE);
-				HAL_TIM_Base_Start_IT(&htim3);
+				//HAL_TIM_Base_Stop_IT(&htim1);
+				//__HAL_TIM_CLEAR_FLAG(&htim3, TIM_FLAG_UPDATE);
+				//HAL_TIM_Base_Start_IT(&htim3);
 				*dash_page = PAGE1;
 				break;
 			case 0x02:
-				HAL_TIM_Base_Stop_IT(&htim1);
-				HAL_TIM_Base_Stop_IT(&htim3);
+				//HAL_TIM_Base_Stop_IT(&htim1);
+				//HAL_TIM_Base_Stop_IT(&htim3);
 				*dash_page = PAGE2;
 				break;
 			case 0x03:
-				HAL_TIM_Base_Stop_IT(&htim3);
-				__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+				//HAL_TIM_Base_Stop_IT(&htim3);
+				//__HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
 				*dash_page = PAGE3;
 				if( *dash_state == NEXTION_SD ){
 					LED0_On();
 				}
-				HAL_TIM_Base_Start_IT(&htim1);
+				//HAL_TIM_Base_Start_IT(&htim1);
 			break;
 			default:
 				//*dash_page = PAGE0;
@@ -317,8 +318,8 @@ void SDInit(sd_card_t* sd_card)
 		}
 	}
 
-	__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
-	HAL_TIM_Base_Start_IT(&htim2);
+//	__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
+//	HAL_TIM_Base_Start_IT(&htim2);
 	
 	#ifdef _DEBUG
 		 HAL_UART_Transmit(&huart2, "SD_Init\r\n", 9, 200);

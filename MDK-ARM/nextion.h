@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include "fatfs.h"
 
-#define CAN_FRAME_COUNT 4
+#define CAN_FRAME_COUNT 8
 
 #define CAN_ADR_ZAPI0 0x388
 #define CAN_ADR_ZAPI1 0x288
@@ -16,10 +16,10 @@
 #define CAN_ADR_BMS1	0x410
 #define CAN_ADR_BMS2	0x420
 
-#define CAN_ADR_PDM 	0x500
+#define CAN_ADR_PDM 	0x700
 
-#define CAN_ADR_SENS0	0x600
-#define CAN_ADR_SENS1	0x610
+#define CAN_ADR_SENS0	0x600  //pot1
+#define CAN_ADR_SENS1	0x610  //pot2
 #define CAN_ADR_SENS2 0x620
 #define CAN_ADR_SENS3 0x630
 #define CAN_ADR_SENS4 0x640
@@ -39,6 +39,20 @@ extern UART_HandleTypeDef huart2;
 extern char k[3];
 
 typedef struct {
+	uint16_t min;
+	uint16_t max;
+	uint16_t avg;	
+	
+} susp_t;
+
+typedef struct {
+	uint8_t status_field;
+	uint8_t temps[5];
+	uint16_t imd_resistance;
+
+} pdm_t;
+
+typedef struct {
 	
 	uint8_t speed;						//
 	uint16_t rpm;
@@ -48,7 +62,9 @@ typedef struct {
 	uint8_t bat_voltage;
 	uint8_t engine_temp;			//
 	uint8_t controller_temp;
-	uint8_t bat_temps[6];			//
+	susp_t susp_front;			//
+	susp_t susp_rear;
+	pdm_t pdm_val;
 	
 } nextion_uart_t;
 
@@ -85,9 +101,9 @@ typedef enum {
 	PAGE3	
 } dash_page_t;
 
-void ProcessData_P(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
-void ProcessData_R(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
-void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
+//void ProcessData_P(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
+//void ProcessData_R(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
+//void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
 
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl);

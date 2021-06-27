@@ -153,8 +153,8 @@
           <Number>0</Number>
           <Type>2</Type>
           <LineNumber>0</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>536871928</Address>
+          <EnabledFlag>0</EnabledFlag>
+          <Address>536871960</Address>
           <ByteObject>1</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>1</ManyObjects>
@@ -168,9 +168,9 @@
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>591</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134229476</Address>
+          <LineNumber>614</LineNumber>
+          <EnabledFlag>0</EnabledFlag>
+          <Address>134222270</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -179,7 +179,23 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>../Src/main.c</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\Dashboard_v1\../Src/main.c\591</Expression>
+          <Expression>\\Dashboard_v1\../Src/main.c\614</Expression>
+        </Bp>
+        <Bp>
+          <Number>2</Number>
+          <Type>0</Type>
+          <LineNumber>654</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>134222514</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>../Src/main.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression>\\Dashboard_v1\../Src/main.c\654</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -196,17 +212,7 @@
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>nx_val</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>CAN_ramka[0]</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>nx_val</ItemText>
+          <ItemText>CAN_ramka</ItemText>
         </Ww>
       </WatchWindow1>
       <WatchWindow2>

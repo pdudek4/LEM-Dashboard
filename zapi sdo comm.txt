@@ -1,0 +1,22 @@
+SDO Read 0x2102 0 bat voltage [V*100]
+->ID: 608 Dane: 40 02 21 00 00 00 00 00
+	Odp 0x2102 00  =0x000027a3  dec=10147
+<-ID: 588 Dane: 43 02 21 00 a3 27 00 00
+
+ 
+SDO Read 0x2108 0  current RMS [A]
+->ID: 608 Dane: 40 08 21 00 00 00 00 00
+	Odp 0x2108 00  =0x00000000  dec=0
+<-ID: 588 Dane: 43 08 21 00 00 00 00 00 
+
+
+SDO Read 0x2111 0  temperature [st c]
+->ID: 608 Dane: 40 11 21 00 00 00 00 00
+	Odp 0x2111 00  =0x00000014  dec=20
+<-ID: 588 Dane: 43 11 21 00 14 00 00 00 
+
+
+SDO Read 0x2112 0 motor temp [st c]
+->ID: 608 Dane: 40 12 21 00 00 00 00 00
+	Odp 0x2112 00  =0x00000018  dec=24
+<-ID: 588 Dane: 43 12 21 00 18 00 00 00 

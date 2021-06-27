@@ -76,6 +76,8 @@ static void MX_TIM3_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void CAN_filterConfig(void);
+void CAN_filterConfig1(void);
+
 
 /* USER CODE END PFP */
 
@@ -155,11 +157,12 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	
 	CAN_filterConfig();
+	CAN_filterConfig1();
 	HAL_CAN_Start(&hcan1);
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // musi byc!!
-	HAL_TIM_Base_Start_IT(&htim1); //4 Hz docelowo, wazniejsze onformacje na dash
-	HAL_TIM_Base_Start_IT(&htim2); //10 Hz zapis na SD
-	//HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
+	HAL_TIM_Base_Start_IT(&htim1); //10 Hz docelowo, wazniejsze onformacje na dash
+	HAL_TIM_Base_Start_IT(&htim2); //10 Hz przeliczanie
+	HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
 	HAL_UART_Receive_IT(&huart2, &Uart2_zn, 1);	//odbior z nextiona
 	
 	
@@ -178,12 +181,7 @@ int main(void)
 			nx_val.engine_temp=0;
 			nx_val.rpm=0;
 			nx_val.speed=0;
-			nx_val.bat_temps[0]=0;
-			nx_val.bat_temps[1]=0;
-			nx_val.bat_temps[2]=0;
-			nx_val.bat_temps[3]=0;
-			nx_val.bat_temps[4]=0;
-			nx_val.bat_temps[5]=0;
+
 	
 	/*f_mount(&(sd_card.myFatFS), SDPath, 1);
 	f_open(&(sd_card.myFile), sd_card.SD_nazwapliku, FA_WRITE | FA_CREATE_ALWAYS);
@@ -406,7 +404,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7199;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9999;
+  htim2.Init.Period = 999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -449,9 +447,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 28799;
+  htim3.Init.Prescaler = 7199;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 4999;
+  htim3.Init.Period = 9999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -565,33 +563,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint32_t mailbox;
 	int ID = 0x608;
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 4 Hz <<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 10 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
 		//wywolanie funkcji przetwarzajacej dane
-		//ProcessData_P(&nx_val, &CAN_ramka);
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
 		AddToBuffor_SD(buf_sd, &nx_val, &nx_dowysylki_sd);	
 		
-		 
-	//bat voltage
-		if(counter == 1){
-			frame[1] = 0x02;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-	//temperature
-		else if(counter == 5){
-			frame[1] = 0x11;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-	//motor temperature
-		else if(counter == 9){
-			frame[1] = 0x12;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-		counter++;
-		if( counter == 13) counter = 0;
 	}
 	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD 10 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
@@ -608,6 +587,24 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		//ProcessData_R(&nx_val, &CAN_ramka);
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r);
+		
+	//bat voltage
+		if(counter == 1){
+			frame[1] = 0x02;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+	//temperature
+		else if(counter == 2){
+			frame[1] = 0x11;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+	//motor temperature
+		else if(counter == 3){
+			frame[1] = 0x12;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		}
+		counter++;
+		if( counter == 4) counter = 0;
 	}
 
 }
@@ -620,7 +617,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI0){
 		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[0]);
 	}
-	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI2){
+	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI2){
 		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[1]);
 		
 		switch (CAN_ramka[1][1]){
@@ -644,7 +641,21 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 				break;			
 		}
 	}	
-
+	//pot1 - front
+	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS0){
+		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[2]);
+	}
+	//pot2 - rear
+	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS1){
+		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[3]);
+	}
+	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS2){
+		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
+	}
+	//pdm
+	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_PDM){
+		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[5]);
+	}
 	
 }
 
@@ -662,8 +673,30 @@ void CAN_filterConfig(void)
 	filterConfig.FilterFIFOAssignment = 0;
 	filterConfig.FilterIdHigh = (0x0388 << 5);
 	filterConfig.FilterIdLow = (0x0588 << 5);
-	filterConfig.FilterMaskIdHigh = (0x0302 << 5);
-	filterConfig.FilterMaskIdLow = (0x0303 << 5);
+	filterConfig.FilterMaskIdHigh = (0x0700 << 5);
+	filterConfig.FilterMaskIdLow = (0x0600 << 5);
+	filterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
+	filterConfig.FilterScale = CAN_FILTERSCALE_16BIT;
+
+	HAL_CAN_ConfigFilter(&hcan1, &filterConfig);
+}
+
+void CAN_filterConfig1(void)
+{
+	CAN_FilterTypeDef filterConfig;
+	//skala 32 bit jest spoko do Ext ID, do Std ID najlepiej 16 bit, wtedy mamy 2x wiecej ID 
+	//w skali 16 bit high i low oznacza 2 osobne ID
+	//w skali 32 bit high i low oznacza MSB i LSB danego 32 bitowego rejestru
+	//w trybie ID LIST oraz skali 16 bit w kazdym banku mozna ustawic 4 filtry Std ID
+	//w trybie ID LIST FilterMask oraz FilterId dotyczy roznych ID
+	//w trybie ID MASK FilterMask dotyczy maski a FilterId dotyczy ID
+	filterConfig.FilterBank = 2;
+	filterConfig.FilterActivation = ENABLE;
+	filterConfig.FilterFIFOAssignment = 0;
+	filterConfig.FilterIdHigh = (0x0610 << 5);
+	filterConfig.FilterIdLow = (0x0620 << 5);
+	filterConfig.FilterMaskIdHigh = (0x0630 << 5);
+	filterConfig.FilterMaskIdLow = (0x0640 << 5);
 	filterConfig.FilterMode = CAN_FILTERMODE_IDLIST;
 	filterConfig.FilterScale = CAN_FILTERSCALE_16BIT;
 
