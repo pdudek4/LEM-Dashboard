@@ -8,6 +8,7 @@
 -dodaj wyslanie napiec z bmsa (wartosci 'x' float x.yy) processData z nowym timerem o malej f
 ====================================================================*/
 char k[3] = {0xff, 0xff, 0xff};
+bool flaga_led = false;
  /*
 void ProcessData_P(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {
@@ -56,7 +57,10 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {	
 	float fbat;
-
+	
+	(*CAN_ramka)[0][0] &= 1;
+  nx_val->contactor = !((*CAN_ramka)[0][0]);
+	
 	uint16_t speedtmp = ((*CAN_ramka)[0][2] << 8) + (*CAN_ramka)[0][3];
 	unsigned int sptmp;
 	
@@ -67,13 +71,13 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	fbat = (nx_val->bat_voltage-84)*3.05;
 	nx_val->bat_percent = (uint8_t) fbat;
 
-	nx_val->susp_front.min = ((*CAN_ramka)[3][1] << 8) + (*CAN_ramka)[3][0];
-	nx_val->susp_front.max = ((*CAN_ramka)[3][3] << 8) + (*CAN_ramka)[3][2];
-	nx_val->susp_front.avg = ((*CAN_ramka)[3][5] << 8) + (*CAN_ramka)[3][4];
-	
 	nx_val->susp_rear.min = ((*CAN_ramka)[2][1] << 8) + (*CAN_ramka)[2][0];
 	nx_val->susp_rear.max = ((*CAN_ramka)[2][3] << 8) + (*CAN_ramka)[2][2];
 	nx_val->susp_rear.avg = ((*CAN_ramka)[2][5] << 8) + (*CAN_ramka)[2][4];
+	
+	nx_val->susp_front.min = ((*CAN_ramka)[3][1] << 8) + (*CAN_ramka)[3][0];
+	nx_val->susp_front.max = ((*CAN_ramka)[3][3] << 8) + (*CAN_ramka)[3][2];
+	nx_val->susp_front.avg = ((*CAN_ramka)[3][5] << 8) + (*CAN_ramka)[3][4];
 	
 	nx_val->pdm_val.status_field = (*CAN_ramka)[5][0];
 	nx_val->pdm_val.temps[0] = (*CAN_ramka)[5][1];
@@ -82,6 +86,8 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	nx_val->pdm_val.temps[3] = (*CAN_ramka)[5][4];
 	nx_val->pdm_val.temps[4] = (*CAN_ramka)[5][5];
 	nx_val->pdm_val.imd_resistance = ((*CAN_ramka)[5][7] << 8) + (*CAN_ramka)[5][6];
+
+//nx_val->rpm++;
 	
 }
 
@@ -119,15 +125,29 @@ void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 	sprintf(value_c, "n4.val=%d%c%c%c", nx_val->engine_temp, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 
-  sprintf(value_c, "n5.val=%d%c%c%c", nx_val->bat_percent, 0xff, 0xff, 0xff);
+  sprintf(value_c, "n5.val=%d%c%c%c", nx_val->bat_voltage, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 
+  sprintf(value_c, "j0.val=%d%c%c%c", nx_val->bat_percent, 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
+	
+	if(nx_val->contactor && (nx_val->can_count < 3)) {
+		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 1);
+		//flaga_led = true;
+	}
+	else {
+		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
+		//flaga_led  = false;
+	}
+	nx_val->can_count++;
 	*do_wysyl = true;
 }
 
-void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)
+void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {
 	char value_c[16];
+	int i;
+	static int t=0;
 	
 	//n2.val=
 	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
@@ -172,24 +192,53 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 //	//n13.val=
 	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->pdm_val.temps[4], 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
+	
+//	//n14.val=
+	sprintf(value_c, "n14.val=%d%c%c%c", nx_val->susp_rear.avg, 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
 
+	if(t == 12){
+		for(i=0; i<8; i++){
+			(*CAN_ramka)[0][i] = 0;
+			(*CAN_ramka)[2][i] = 0;
+			(*CAN_ramka)[3][i] = 0;
+			(*CAN_ramka)[5][i] = 0;
+		}
+		nx_val->bat_voltage = 0;
+		nx_val->engine_temp = 0;
+		nx_val->controller_temp = 0;
+		t=0;
+	}
+	t++;
+	
+	
 	*do_wysyl = true;
 }
 
-void AddToBuffor_SD(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)
+void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
+	char buf[70];
+	static int n=0;
 	//dodaj parametry zapisywane na SD	
-	//----------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-	sprintf(buf_nxt, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
 	/*			1 				 	2 								3									  	 4												5					*/ 			
 	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_voltage,
 	/*			6 				   			          	7 										8				        */
 	nx_val->susp_front.min, nx_val->susp_front.avg, nx_val->susp_front.max,
-	/*			9 				   				10 										      11	  		 		     */
+	/*			9 				   				     10 								    11	  		 		     */
 	nx_val->susp_rear.min, nx_val->susp_rear.avg, nx_val->susp_rear.max,
-	/*			12 				   				13 										      14	  		 		     */
+	/*			12 				   				     13 									     14	  		 		     */
 	nx_val->pdm_val.temps[0], nx_val->pdm_val.temps[1], nx_val->pdm_val.temps[2]);
-	*do_wysyl = true;
+	
+	strcat(buf_sd, buf);
+	n++;
+	
+	
+	if(n == 28){
+		*do_wysyl = true;
+		n=0;
+	}
 }
 
 
@@ -210,13 +259,14 @@ void Nextion_SendValue(char* buf_nxt, volatile bool* do_wysyl, volatile bool* fr
 		if((true == *do_wysyl) && (true == *free)){
 			size_nxt = strlen(buf_nxt);
 			HAL_UART_Transmit_DMA(&huart2, (uint8_t*)buf_nxt, size_nxt);
+			//HAL_UART_Transmit_DMA(&huart2, "NX_send\r\n", 9);
 			*free = false;
 			*do_wysyl = false;
 		}
 	
 }
 
-void Nextion_SDRun(sd_card_t* sd_card, char* buf_nxt, volatile bool* do_wysyl)
+void SDZapis(sd_card_t* sd_card, char* buf_zap, char* buf_usun, volatile bool* do_wysyl)
 {
 	if(true == sd_card->init){
 		SDInit(sd_card);	
@@ -224,10 +274,14 @@ void Nextion_SDRun(sd_card_t* sd_card, char* buf_nxt, volatile bool* do_wysyl)
 	}
 	
 	if(true == *do_wysyl){
+		memset(buf_usun, 0 , 2);
+		
 		f_lseek(&(sd_card->myFile), f_size(&(sd_card->myFile)));
-		f_write(&(sd_card->myFile), buf_nxt, strlen(buf_nxt), &(sd_card->myBytes));
+		f_write(&(sd_card->myFile), buf_zap, strlen(buf_zap), &(sd_card->myBytes));
 		f_sync(&(sd_card->myFile)); //zapis fat zapobiega utracie danych
-
+				
+		sd_card->flaga ^= 1;
+		
 		*do_wysyl = false;
 		#ifdef _DEBUG
 			HAL_UART_Transmit_IT(&huart2, "SD_Run\r\n", 8);
@@ -303,10 +357,20 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 
 void SDInit(sd_card_t* sd_card)
 {
+	char nowa_nazwa[7] = "/0";
+  static int nr_pliku = 1;
 	if(f_mount(&(sd_card->myFatFS), SDPath, 1) == FR_OK){
 		//wyslanie pierwszej ikonki na LCD
 		HAL_UART_Transmit(&huart2, "vis p1,1", 8, 150);
 		HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
+		
+		//sprawdzenie obecnosci plikow
+		while(f_stat(sd_card->SD_nazwapliku, NULL) != FR_NO_FILE) {
+			nr_pliku++;
+			sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
+			strcpy(sd_card->SD_nazwapliku, nowa_nazwa);
+		}
+		
 		if(f_open(&(sd_card->myFile), sd_card->SD_nazwapliku, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK){
 			//jezeli udalo sie utworzyc plik na sd to wyslij druga ikonke na LCD
 			HAL_UART_Transmit(&huart2, "vis p2,1", 8, 150);
@@ -317,9 +381,6 @@ void SDInit(sd_card_t* sd_card)
 			HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
 		}
 	}
-
-//	__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
-//	HAL_TIM_Base_Start_IT(&htim2);
 	
 	#ifdef _DEBUG
 		 HAL_UART_Transmit(&huart2, "SD_Init\r\n", 9, 200);
@@ -328,20 +389,14 @@ void SDInit(sd_card_t* sd_card)
 
 void SDkoniec(sd_card_t* sd_card)
 {
-	//HAL_TIM_Base_Stop_IT(&htim2);
-	char nowa_nazwa[7];
-  static int nr_pliku = 1;
-
 	f_close(&(sd_card->myFile));
 	//usuniecie ikonek z LCD
 	HAL_UART_Transmit(&huart2, "vis p1,0", 8, 150);
 	HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
 	HAL_UART_Transmit(&huart2, "vis p2,0", 8, 150);
 	HAL_UART_Transmit(&huart2, (uint8_t*)k, 3, 100);
-	//inkrementacja nazwy (nr) pliku
-	nr_pliku++;
-  sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
-  strcpy(sd_card->SD_nazwapliku, nowa_nazwa);
+
+	f_mount(0, SDPath, 0);
 	
 	#ifdef _DEBUG
 		 HAL_UART_Transmit_IT(&huart2, "SD_Koniec\r\n", 11);

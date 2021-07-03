@@ -18,8 +18,8 @@
 
 #define CAN_ADR_PDM 	0x700
 
-#define CAN_ADR_SENS0	0x600  //pot1
-#define CAN_ADR_SENS1	0x610  //pot2
+#define CAN_ADR_SENS0	0x600  //pot1 rear
+#define CAN_ADR_SENS1	0x610  //pot2 front
 #define CAN_ADR_SENS2 0x620
 #define CAN_ADR_SENS3 0x630
 #define CAN_ADR_SENS4 0x640
@@ -53,6 +53,12 @@ typedef struct {
 } pdm_t;
 
 typedef struct {
+	uint8_t zapi;
+	uint8_t pdm;
+	uint8_t sensory;
+} heartbeat_t;
+
+typedef struct {
 	
 	uint8_t speed;						//
 	uint16_t rpm;
@@ -65,6 +71,8 @@ typedef struct {
 	susp_t susp_front;			//
 	susp_t susp_rear;
 	pdm_t pdm_val;
+	bool contactor;
+	uint8_t can_count;
 	
 } nextion_uart_t;
 
@@ -84,6 +92,8 @@ typedef struct {
 	UINT myBytes;
 	char SD_nazwapliku[7];
 	bool init;
+	bool flaga;
+	bool sd_add_buf;
 	
 } sd_card_t;
 
@@ -107,12 +117,12 @@ typedef enum {
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
 
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl);
-void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl);
-void AddToBuffor_SD(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl);
+void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8]);
+void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysyl);
 
 void IdleRun(void);
 void Nextion_SendValue( char* buf_nxt, volatile bool* do_wysyl, volatile bool* free);
-void Nextion_SDRun(sd_card_t* sd_card, char* buf_nxt, volatile bool* do_wysyl);
+void SDZapis(sd_card_t* sd_card, char* buf_zap, char* buf_usun, volatile bool* do_wysyl);
 
 void Process_uart(dash_state_t* dash_state,  dash_page_t* dash_page, uint8_t* Uart2_buf, sd_card_t* sd_card);
 

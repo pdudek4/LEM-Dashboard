@@ -78,7 +78,7 @@ static void MX_TIM2_Init(void);
 void CAN_filterConfig(void);
 void CAN_filterConfig1(void);
 
-
+void Heartbeat_err(uint8_t device);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -97,10 +97,12 @@ char nx_endline[3] = {0xff, 0xff, 0xff};
 char buf_nxt_p[80];
 char buf_nxt_r[190];
 char buf_sd[190];
-
+char buf_sd1[2000];
+char buf_sd2[2000];
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
+heartbeat_t heartbeat;
 dash_state_t dash_state = IDLE;
 dash_page_t dash_page = PAGE0;
 
@@ -111,7 +113,8 @@ volatile uint8_t Uart2_ff;
 volatile bool Uart2_free = true;
 
 CAN_TxHeaderTypeDef txCAN;
-int volt; 
+int volt;
+	int j,i;
 /* USER CODE END 0 */
 
 /**
@@ -165,12 +168,9 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
 	HAL_UART_Receive_IT(&huart2, &Uart2_zn, 1);	//odbior z nextiona
 	
-	
-//		CANTxh.IDE = CAN_ID_STD;
-//		CANTxh.StdId = 0x100;
-//		CANTxh.DLC = 8;
-//		CANTxh.RTR = CAN_RTR_DATA;
   sd_card.init = false;
+	sd_card.flaga = 1;
+	sd_card.sd_add_buf = false;
 	strcpy(sd_card.SD_nazwapliku, "1.TXT\0");
 	dash_state = IDLE;
 	dash_page = PAGE0;
@@ -182,13 +182,7 @@ int main(void)
 			nx_val.rpm=0;
 			nx_val.speed=0;
 
-	
-	/*f_mount(&(sd_card.myFatFS), SDPath, 1);
-	f_open(&(sd_card.myFile), sd_card.SD_nazwapliku, FA_WRITE | FA_CREATE_ALWAYS);
-	char text[] = "Hejka!\r\n";
-	f_write(&(sd_card.myFile), text, strlen(text), &(sd_card.myBytes));
-	f_close(&(sd_card.myFile)); */
-	
+	HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -210,7 +204,21 @@ int main(void)
 			IdleRun();
 			break;
 	}
-	if(dash_state == NEXTION_SD) Nextion_SDRun(&sd_card, buf_sd, &nx_dowysylki_sd);
+	if(dash_state == NEXTION_SD){
+		//dodawanie do bufora sd (28 linii)
+		if(sd_card.sd_add_buf){
+			if(sd_card.flaga) {
+				AddToBuffor_SD(buf_sd1, &nx_val, &nx_dowysylki_sd);
+				SDZapis(&sd_card, buf_sd1, buf_sd2, &nx_dowysylki_sd);
+			}
+			else {
+				AddToBuffor_SD(buf_sd2, &nx_val, &nx_dowysylki_sd);
+				SDZapis(&sd_card, buf_sd2, buf_sd1, &nx_dowysylki_sd);
+			}
+			sd_card.sd_add_buf  =false;
+		}
+		
+	}
 
 	
 		
@@ -358,7 +366,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 7199;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 999;
+  htim1.Init.Period = 2499;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -404,7 +412,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7199;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 999;
+  htim2.Init.Period = 2499;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -447,9 +455,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 7199;
+  htim3.Init.Prescaler = 28799;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 9999;
+  htim3.Init.Period = 4999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -538,7 +546,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : LED_Pin_Pin */
+  GPIO_InitStruct.Pin = LED_Pin_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LED_Pin_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 PB2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
@@ -566,10 +584,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 10 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
-		//wywolanie funkcji przetwarzajacej dane
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
-		AddToBuffor_SD(buf_sd, &nx_val, &nx_dowysylki_sd);	
+		//dodawanie do bufora sd (28 linii)
+		sd_card.sd_add_buf = true;
 		
 	}
 	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD 10 Hz<<<<<<<<<<<<<<<<<
@@ -577,16 +595,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		//wywolanie funkcji przetwarzajacej dane
 		ProcessData_All(&nx_val, &CAN_ramka);
-		//wywolanie funkcji strcat i dodajacej dane do buf_sd
 			
 	}
 	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE<<<<<<<<<<<<<<
 	if(htim->Instance == TIM3)
 	{
-		//wywolanie funkcji przetwarzajacej dane
-		//ProcessData_R(&nx_val, &CAN_ramka);
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
-		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r);
+		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r, &CAN_ramka);
 		
 	//bat voltage
 		if(counter == 1){
@@ -612,13 +627,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
 	int curr, temp, temps;
+	uint32_t ID = (CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos;
 	
 	//sprawdzanie identyfikatora odebranej wiadmosci
-	if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI0){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[0]);
+	if(ID == CAN_ADR_ZAPI0){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[0]);
+		CanGetMsgData(CAN_ramka[0]);
+		nx_val.can_count = 0;
 	}
-	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_ZAPI2){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[1]);
+	else if(ID == CAN_ADR_ZAPI2){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[1]);
+		CanGetMsgData(CAN_ramka[1]);
 		
 		switch (CAN_ramka[1][1]){
 			case 0x02:
@@ -626,11 +645,6 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			volt = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
 			nx_val.bat_voltage = (uint8_t) volt;
 				break;
-//			case 0x08:
-//			//current RMS [A]
-//			curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
-//			nx_val.amps = (uint8_t) curr;
-//				break;
 			case 0x11:
 			//temperature
 			nx_val.controller_temp = CAN_ramka[1][4];
@@ -641,20 +655,25 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 				break;			
 		}
 	}	
-	//pot1 - front
-	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS0){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[2]);
+	//pot1 - rear
+	else if(ID == CAN_ADR_SENS0){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[2]);
+		CanGetMsgData(CAN_ramka[2]);
 	}
-	//pot2 - rear
-	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS1){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[3]);
+	//pot2 - front
+	else if(ID == CAN_ADR_SENS1){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[3]);
+		CanGetMsgData(CAN_ramka[3]);
 	}
-	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_SENS2){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
+	//???future use
+	else if(ID == CAN_ADR_SENS2){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
+		CanGetMsgData(CAN_ramka[4]);
 	}
 	//pdm
-	else if((CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos == CAN_ADR_PDM){
-		HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[5]);
+	else if(ID == CAN_ADR_PDM){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[5]);
+		CanGetMsgData(CAN_ramka[5]);
 	}
 	
 }
@@ -728,7 +747,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	Uart2_free = true;
-	
+}
+
+void Heartbeat_err(uint8_t device)
+{
+	char buf[20];
+	sprintf(buf, "vis p%,1", device);
+	HAL_UART_Transmit_IT(&huart2, buf, 8);
+	HAL_UART_Transmit_IT(&huart2, (uint8_t*)k, 3);	
 }
 /* USER CODE END 4 */
 

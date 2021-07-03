@@ -151,10 +151,26 @@
       <Breakpoint>
         <Bp>
           <Number>0</Number>
+          <Type>0</Type>
+          <LineNumber>625</LineNumber>
+          <EnabledFlag>1</EnabledFlag>
+          <Address>0</Address>
+          <ByteObject>0</ByteObject>
+          <HtxType>0</HtxType>
+          <ManyObjects>0</ManyObjects>
+          <SizeOfObject>0</SizeOfObject>
+          <BreakByAccess>0</BreakByAccess>
+          <BreakIfRCount>0</BreakIfRCount>
+          <Filename>../Src/main.c</Filename>
+          <ExecCommand></ExecCommand>
+          <Expression></Expression>
+        </Bp>
+        <Bp>
+          <Number>1</Number>
           <Type>2</Type>
           <LineNumber>0</LineNumber>
           <EnabledFlag>0</EnabledFlag>
-          <Address>536871960</Address>
+          <Address>536875754</Address>
           <ByteObject>1</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>1</ManyObjects>
@@ -164,38 +180,6 @@
           <Filename></Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\Dashboard_v1\../Src/main.c\nx_val.bat_percent</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>614</LineNumber>
-          <EnabledFlag>0</EnabledFlag>
-          <Address>134222270</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>../Src/main.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Dashboard_v1\../Src/main.c\614</Expression>
-        </Bp>
-        <Bp>
-          <Number>2</Number>
-          <Type>0</Type>
-          <LineNumber>654</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>134222514</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>../Src/main.c</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\Dashboard_v1\../Src/main.c\654</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
@@ -214,12 +198,22 @@
           <WinNumber>1</WinNumber>
           <ItemText>CAN_ramka</ItemText>
         </Ww>
+        <Ww>
+          <count>3</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>nx_val,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>4</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>buf_nxt_p</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>
           <count>0</count>
           <WinNumber>2</WinNumber>
-          <ItemText>buf_nxt_r</ItemText>
+          <ItemText>buf_nxt_p</ItemText>
         </Ww>
       </WatchWindow2>
       <Tracepoint>
