@@ -65,7 +65,7 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	unsigned int sptmp;
 	
 	nx_val->rpm = speedtmp * 0.15;
-	sptmp = nx_val->rpm * 0.024572;
+	sptmp = nx_val->rpm * 0.02358912f;
 	nx_val->speed = (uint8_t) sptmp;
 	
 	fbat = (nx_val->bat_voltage-84)*3.05;
@@ -131,14 +131,15 @@ void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
   sprintf(value_c, "j0.val=%d%c%c%c", nx_val->bat_percent, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 	
-	if(nx_val->contactor && (nx_val->can_count < 3)) {
+	if(nx_val->contactor && (nx_val->can_count < 3) && (flaga_led == false)) {
 		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 1);
-		//flaga_led = true;
+		flaga_led = true;
 	}
-	else {
+	else if(nx_val->can_count >= 3){
 		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
-		//flaga_led  = false;
+		flaga_led  = false;
 	}
+	
 	nx_val->can_count++;
 	*do_wysyl = true;
 }

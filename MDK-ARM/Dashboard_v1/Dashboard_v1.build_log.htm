@@ -40,17 +40,47 @@ nextion.c(135): warning:  #188-D: enumerated type mixed with another type
   		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 1);
 nextion.c(139): warning:  #188-D: enumerated type mixed with another type
   		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
-nextion.c(153): warning:  #223-D: function "sprintf" declared implicitly
+nextion.c(154): warning:  #223-D: function "sprintf" declared implicitly
   	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
-nextion.c(224): warning:  #223-D: function "sprintf" declared implicitly
+nextion.c(225): warning:  #223-D: function "sprintf" declared implicitly
   	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
-nextion.c(370): warning:  #223-D: function "sprintf" declared implicitly
+nextion.c(371): warning:  #223-D: function "sprintf" declared implicitly
   			sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
 nextion.c: 9 warnings, 0 errors
+compiling main.c...
+..\MDK-ARM\nextion.h(131): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
+  void LED0_Off();
+..\MDK-ARM\nextion.h(132): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
+  void LED0_On();
+..\MDK-ARM\nextion.h(137): warning:  #1-D: last line of file ends without a newline
+  #endif
+../Src/main.c(161): warning:  #188-D: enumerated type mixed with another type
+  HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);	
+../Src/main.c(162): warning:  #188-D: enumerated type mixed with another type
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);	
+../Src/main.c(225): warning:  #188-D: enumerated type mixed with another type
+  	if(nx_val.speed > 30) HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
+../Src/main.c(226): warning:  #188-D: enumerated type mixed with another type
+  	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
+../Src/main.c(586): warning:  #177-D: variable "ID"  was declared but never referenced
+  	int ID = 0x608;
+../Src/main.c(633): warning:  #177-D: variable "curr"  was declared but never referenced
+  	int curr, temp, temps;
+../Src/main.c(633): warning:  #177-D: variable "temp"  was declared but never referenced
+  	int curr, temp, temps;
+../Src/main.c(633): warning:  #177-D: variable "temps"  was declared but never referenced
+  	int curr, temp, temps;
+../Src/main.c(759): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(buf, "vis p%,1", device);
+../Src/main.c(760): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
+  	HAL_UART_Transmit_IT(&huart2, buf, 8);
+../Src/main.c(64): warning:  #177-D: variable "CANRxh"  was declared but never referenced
+  static CAN_RxHeaderTypeDef CANRxh;
+../Src/main.c: 14 warnings, 0 errors
 linking...
-Program Size: Code=25768 RO-data=700 RW-data=68 ZI-data=22492  
+Program Size: Code=25828 RO-data=700 RW-data=68 ZI-data=22500  
 FromELF: creating hex file...
-"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 9 Warning(s).
+"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 23 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -73,7 +103,7 @@ Package Vendor: Keil
 <h2>Collection of Component Files used:</h2>
 
    * Component: ARM::CMSIS:CORE:5.4.0
-Build Time Elapsed:  00:00:07
+Build Time Elapsed:  00:00:09
 </pre>
 </body>
 </html>

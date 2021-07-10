@@ -72,7 +72,7 @@ typedef struct {
 	susp_t susp_rear;
 	pdm_t pdm_val;
 	bool contactor;
-	uint8_t can_count;
+	uint32_t can_count;
 	
 } nextion_uart_t;
 

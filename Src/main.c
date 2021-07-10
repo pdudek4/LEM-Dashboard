@@ -158,7 +158,9 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-	
+HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);	
+HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);	
+
 	CAN_filterConfig();
 	CAN_filterConfig1();
 	HAL_CAN_Start(&hcan1);
@@ -182,7 +184,8 @@ int main(void)
 			nx_val.rpm=0;
 			nx_val.speed=0;
 
-	HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
+	nx_val.contactor=false;
+	
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -219,7 +222,8 @@ int main(void)
 		}
 		
 	}
-
+	if(nx_val.speed > 30) HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
+	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
 	
 		
     /* USER CODE END WHILE */
@@ -457,7 +461,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 28799;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 4999;
+  htim3.Init.Period = 3999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -577,7 +581,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-	static int counter =0;
+	static int counter=1;
 	uint32_t mailbox;
 	int ID = 0x608;
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
@@ -619,7 +623,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
 		}
 		counter++;
-		if( counter == 4) counter = 0;
+		if( counter == 4) counter = 1;
 	}
 
 }
