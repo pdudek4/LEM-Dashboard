@@ -39,9 +39,9 @@ extern UART_HandleTypeDef huart2;
 extern char k[3];
 
 typedef struct {
-	uint16_t min;
-	uint16_t max;
-	uint16_t avg;	
+	int16_t min;
+	int16_t max;
+	int16_t avg;	
 	
 } susp_t;
 
@@ -58,6 +58,18 @@ typedef struct {
 	uint8_t sensory;
 } heartbeat_t;
 
+typedef struct{
+	
+	int16_t yaw;
+	int16_t pitch;
+	int16_t roll;
+
+	int16_t acc_x;
+	int16_t acc_y;
+	int16_t acc_z;
+	
+} imu_t;
+
 typedef struct {
 	
 	uint8_t speed;						//
@@ -71,6 +83,7 @@ typedef struct {
 	susp_t susp_front;			//
 	susp_t susp_rear;
 	pdm_t pdm_val;
+	imu_t imu_data;
 	bool contactor;
 	uint32_t can_count;
 	

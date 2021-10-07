@@ -65,27 +65,42 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	unsigned int sptmp;
 	
 	nx_val->rpm = speedtmp * 0.15;
-	sptmp = nx_val->rpm * 0.02358912f;
+	sptmp = nx_val->rpm * 0.02358912f*0.8f;
+//	sptmp = nx_val->rpm * 0.0233672f;
 	nx_val->speed = (uint8_t) sptmp;
 	
 	fbat = (nx_val->bat_voltage-84)*3.05;
 	nx_val->bat_percent = (uint8_t) fbat;
 
+	
+	//pot 1
 	nx_val->susp_rear.min = ((*CAN_ramka)[2][1] << 8) + (*CAN_ramka)[2][0];
 	nx_val->susp_rear.max = ((*CAN_ramka)[2][3] << 8) + (*CAN_ramka)[2][2];
 	nx_val->susp_rear.avg = ((*CAN_ramka)[2][5] << 8) + (*CAN_ramka)[2][4];
-	
+
+	//pot2
 	nx_val->susp_front.min = ((*CAN_ramka)[3][1] << 8) + (*CAN_ramka)[3][0];
 	nx_val->susp_front.max = ((*CAN_ramka)[3][3] << 8) + (*CAN_ramka)[3][2];
 	nx_val->susp_front.avg = ((*CAN_ramka)[3][5] << 8) + (*CAN_ramka)[3][4];
 	
-	nx_val->pdm_val.status_field = (*CAN_ramka)[5][0];
-	nx_val->pdm_val.temps[0] = (*CAN_ramka)[5][1];
-	nx_val->pdm_val.temps[1] = (*CAN_ramka)[5][2];
-	nx_val->pdm_val.temps[2] = (*CAN_ramka)[5][3];
-	nx_val->pdm_val.temps[3] = (*CAN_ramka)[5][4];
-	nx_val->pdm_val.temps[4] = (*CAN_ramka)[5][5];
-	nx_val->pdm_val.imd_resistance = ((*CAN_ramka)[5][7] << 8) + (*CAN_ramka)[5][6];
+	//gyro
+	nx_val->imu_data.yaw = ((*CAN_ramka)[4][1] << 8) + (*CAN_ramka)[4][0];
+	nx_val->imu_data.pitch = ((*CAN_ramka)[4][3] << 8) + (*CAN_ramka)[4][2];
+	nx_val->imu_data.roll = ((*CAN_ramka)[4][5] << 8) + (*CAN_ramka)[4][4];
+	
+	//acc
+	nx_val->imu_data.acc_x = ((*CAN_ramka)[5][1] << 8) + (*CAN_ramka)[5][0];
+	nx_val->imu_data.acc_y = ((*CAN_ramka)[5][3] << 8) + (*CAN_ramka)[5][2];
+	nx_val->imu_data.acc_z = ((*CAN_ramka)[5][5] << 8) + (*CAN_ramka)[5][4];
+	
+	
+	nx_val->pdm_val.status_field = (*CAN_ramka)[6][0];
+	nx_val->pdm_val.temps[0] = (*CAN_ramka)[6][1];
+	nx_val->pdm_val.temps[1] = (*CAN_ramka)[6][2];
+	nx_val->pdm_val.temps[2] = (*CAN_ramka)[6][3];
+	nx_val->pdm_val.temps[3] = (*CAN_ramka)[6][4];
+	nx_val->pdm_val.temps[4] = (*CAN_ramka)[6][5];
+	nx_val->pdm_val.imd_resistance = ((*CAN_ramka)[6][7] << 8) + (*CAN_ramka)[6][6];
 
 //nx_val->rpm++;
 	
@@ -218,11 +233,11 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 
 void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
-	char buf[70];
+	char buf[120];
 	static int n=0;
 	//dodaj parametry zapisywane na SD	
-	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
-	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
+	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
 	/*			1 				 	2 								3									  	 4												5					*/ 			
 	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_voltage,
 	/*			6 				   			          	7 										8				        */
@@ -230,7 +245,11 @@ void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysy
 	/*			9 				   				     10 								    11	  		 		     */
 	nx_val->susp_rear.min, nx_val->susp_rear.avg, nx_val->susp_rear.max,
 	/*			12 				   				     13 									     14	  		 		     */
-	nx_val->pdm_val.temps[0], nx_val->pdm_val.temps[1], nx_val->pdm_val.temps[2]);
+	nx_val->pdm_val.temps[0], nx_val->pdm_val.temps[1], nx_val->pdm_val.temps[2],
+	/*			15 				   				     16									     17	  		 		     */
+	nx_val->imu_data.yaw, nx_val->imu_data.pitch, nx_val->imu_data.roll,
+	/*			18 				   				     19 									     20	  		 		     */
+	nx_val->imu_data.acc_x, nx_val->imu_data.acc_y, nx_val->imu_data.acc_z);
 	
 	strcat(buf_sd, buf);
 	n++;

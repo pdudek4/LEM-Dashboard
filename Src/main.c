@@ -97,8 +97,8 @@ char nx_endline[3] = {0xff, 0xff, 0xff};
 char buf_nxt_p[80];
 char buf_nxt_r[190];
 char buf_sd[190];
-char buf_sd1[2000];
-char buf_sd2[2000];
+char buf_sd1[3000];
+char buf_sd2[3000];
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
@@ -592,14 +592,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
 		//dodawanie do bufora sd (28 linii)
 		sd_card.sd_add_buf = true;
-		
 	}
 	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD 10 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
 	{
 		//wywolanie funkcji przetwarzajacej dane
 		ProcessData_All(&nx_val, &CAN_ramka);
-			
 	}
 	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE<<<<<<<<<<<<<<
 	if(htim->Instance == TIM3)
@@ -669,15 +667,19 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[3]);
 		CanGetMsgData(CAN_ramka[3]);
 	}
-	//???future use
+	//yaw pich roll
 	else if(ID == CAN_ADR_SENS2){
 		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
 		CanGetMsgData(CAN_ramka[4]);
+	}// acell x y z
+	else if(ID == CAN_ADR_SENS3){
+		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
+		CanGetMsgData(CAN_ramka[5]);
 	}
 	//pdm
 	else if(ID == CAN_ADR_PDM){
 		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[5]);
-		CanGetMsgData(CAN_ramka[5]);
+		CanGetMsgData(CAN_ramka[6]);
 	}
 	
 }

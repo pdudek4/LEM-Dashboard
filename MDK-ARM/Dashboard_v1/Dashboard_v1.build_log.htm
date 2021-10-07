@@ -5,10 +5,10 @@
 <h2>Tool Versions:</h2>
 IDE-Version: µVision V5.28.0.0
 Copyright (C) 2019 ARM Ltd and ARM Germany GmbH. All rights reserved.
-License Information: Przemek Przemek, Politechnika, LIC=----
+License Information: Przemek Przemek, Politechnika, LIC=VGX63-A2DJS-H8GFS-L8UAC-ULX2G-JWC7F
  
 Tool Versions:
-Toolchain:       MDK-Lite  Version: 5.28.0.0
+Toolchain:       MDK-ARM Plus  Version: 5.28.0.0
 Toolchain Path:  D:\Programy\Keil\ARM\ARMCC\Bin
 C Compiler:      Armcc.exe V5.06 update 6 (build 750)
 Assembler:       Armasm.exe V5.06 update 6 (build 750)
@@ -27,33 +27,11 @@ Project File Date:  07/01/2021
 <h2>Output:</h2>
 *** Using Compiler 'V5.06 update 6 (build 750)', folder: 'D:\Programy\Keil\ARM\ARMCC\Bin'
 Build target 'Dashboard_v1'
-compiling nextion.c...
-nextion.h(131): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
-  void LED0_Off();
-nextion.h(132): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
-  void LED0_On();
-nextion.h(137): warning:  #1-D: last line of file ends without a newline
-  #endif
-nextion.c(119): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(value_c, "n1.val=%d%c%c%c", nx_val->speed, 0xff, 0xff, 0xff);
-nextion.c(135): warning:  #188-D: enumerated type mixed with another type
-  		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 1);
-nextion.c(139): warning:  #188-D: enumerated type mixed with another type
-  		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
-nextion.c(154): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
-nextion.c(225): warning:  #223-D: function "sprintf" declared implicitly
-  	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
-nextion.c(371): warning:  #223-D: function "sprintf" declared implicitly
-  			sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
-nextion.c: 9 warnings, 0 errors
 compiling main.c...
-..\MDK-ARM\nextion.h(131): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
+..\MDK-ARM\nextion.h(144): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
   void LED0_Off();
-..\MDK-ARM\nextion.h(132): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
+..\MDK-ARM\nextion.h(145): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
   void LED0_On();
-..\MDK-ARM\nextion.h(137): warning:  #1-D: last line of file ends without a newline
-  #endif
 ../Src/main.c(161): warning:  #188-D: enumerated type mixed with another type
   HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);	
 ../Src/main.c(162): warning:  #188-D: enumerated type mixed with another type
@@ -64,23 +42,41 @@ compiling main.c...
   	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
 ../Src/main.c(586): warning:  #177-D: variable "ID"  was declared but never referenced
   	int ID = 0x608;
-../Src/main.c(633): warning:  #177-D: variable "curr"  was declared but never referenced
+../Src/main.c(631): warning:  #177-D: variable "curr"  was declared but never referenced
   	int curr, temp, temps;
-../Src/main.c(633): warning:  #177-D: variable "temp"  was declared but never referenced
+../Src/main.c(631): warning:  #177-D: variable "temp"  was declared but never referenced
   	int curr, temp, temps;
-../Src/main.c(633): warning:  #177-D: variable "temps"  was declared but never referenced
+../Src/main.c(631): warning:  #177-D: variable "temps"  was declared but never referenced
   	int curr, temp, temps;
-../Src/main.c(759): warning:  #223-D: function "sprintf" declared implicitly
+../Src/main.c(761): warning:  #223-D: function "sprintf" declared implicitly
   	sprintf(buf, "vis p%,1", device);
-../Src/main.c(760): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
+../Src/main.c(762): warning:  #167-D: argument of type "char *" is incompatible with parameter of type "uint8_t *"
   	HAL_UART_Transmit_IT(&huart2, buf, 8);
 ../Src/main.c(64): warning:  #177-D: variable "CANRxh"  was declared but never referenced
   static CAN_RxHeaderTypeDef CANRxh;
-../Src/main.c: 14 warnings, 0 errors
+../Src/main.c: 13 warnings, 0 errors
+compiling nextion.c...
+nextion.h(144): warning:  #1295-D: Deprecated declaration LED0_Off - give arg types
+  void LED0_Off();
+nextion.h(145): warning:  #1295-D: Deprecated declaration LED0_On - give arg types
+  void LED0_On();
+nextion.c(134): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(value_c, "n1.val=%d%c%c%c", nx_val->speed, 0xff, 0xff, 0xff);
+nextion.c(150): warning:  #188-D: enumerated type mixed with another type
+  		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 1);
+nextion.c(154): warning:  #188-D: enumerated type mixed with another type
+  		HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
+nextion.c(169): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(value_c, "n2.val=%d%c%c%c", nx_val->rpm, 0xff, 0xff, 0xff);
+nextion.c(240): warning:  #223-D: function "sprintf" declared implicitly
+  	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+nextion.c(390): warning:  #223-D: function "sprintf" declared implicitly
+  			sprintf(nowa_nazwa, "%d.TXT\0", nr_pliku);
+nextion.c: 8 warnings, 0 errors
 linking...
-Program Size: Code=25828 RO-data=700 RW-data=68 ZI-data=22500  
+Program Size: Code=26000 RO-data=700 RW-data=68 ZI-data=24516  
 FromELF: creating hex file...
-"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 23 Warning(s).
+"Dashboard_v1\Dashboard_v1.axf" - 0 Error(s), 21 Warning(s).
 
 <h2>Software Packages used:</h2>
 
