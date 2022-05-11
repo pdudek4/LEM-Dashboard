@@ -3,7 +3,7 @@
 
 //#define _DEBUG
 /*===============TO DO===============================================
--dodaj struktury GPS, AKCEL i do buforów nxt wraz z ich rozmiarem i do wysylki ktory bedzie przeliczany w processdata
+-dodaj strukture GPS i do buforów nxt wraz z ich rozmiarem i do wysylki ktory bedzie przeliczany w processdata
 -dodaj odczyt zasilania z CANa od plytki baterii i sterowanie dioda na zlaczu nextiona
 -dodaj wyslanie napiec z bmsa (wartosci 'x' float x.yy) processData z nowym timerem o malej f
 ====================================================================*/
@@ -57,6 +57,7 @@ void ProcessData_SD(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT
 void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUNT][8])
 {	
 	float fbat;
+	float amp_tmp;
 	
 	(*CAN_ramka)[0][0] &= 1;
   nx_val->contactor = !((*CAN_ramka)[0][0]);
@@ -72,6 +73,8 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 	fbat = (nx_val->bat_voltage-84)*3.05;
 	nx_val->bat_percent = (uint8_t) fbat;
 
+	amp_tmp = nx_val->DC_curr / 4;
+	nx_val->DC_curr = (uint16_t) amp_tmp;
 	
 	//pot 1
 	nx_val->susp_rear.min = ((*CAN_ramka)[2][1] << 8) + (*CAN_ramka)[2][0];
@@ -109,27 +112,6 @@ void ProcessData_All(nextion_uart_t* nx_val, uint8_t (*CAN_ramka)[CAN_FRAME_COUN
 void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
 	char value_c[16];
-/* 	char parameter[8] = "n1.val=";
-	
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->speed, 0xff, 0xff, 0xff);
-//  strcpy(buf_nxt, value_c);
-//	
-//	parameter[1]++;
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->rpm, 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
-//	
-//	parameter[1]++;
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->power, 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
-//	
-//	parameter[1]++;
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->engine_temp, 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
-//	
-//	parameter[1]++;
-//	sprintf(value_c, "%s%d%c%c%c", parameter, nx_val->bat_percent, 0xff, 0xff, 0xff);
-//  strcat(buf_nxt, value_c);
-*/
 
 	sprintf(value_c, "n1.val=%d%c%c%c", nx_val->speed, 0xff, 0xff, 0xff);
   strcpy(buf_nxt, value_c);
@@ -144,6 +126,9 @@ void AddToBuffor_P(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
   strcat(buf_nxt, value_c);
 
   sprintf(value_c, "j0.val=%d%c%c%c", nx_val->bat_percent, 0xff, 0xff, 0xff);
+  strcat(buf_nxt, value_c);
+	
+	sprintf(value_c, "j1.val=%d%c%c%c", nx_val->DC_curr, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 	
 	if(nx_val->contactor && (nx_val->can_count < 3) && (flaga_led == false)) {
@@ -204,16 +189,12 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 //	//n12.val=
 	sprintf(value_c, "n12.val=%d%c%c%c", nx_val->pdm_val.temps[3], 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
-//	
-//	//n13.val=
-	sprintf(value_c, "n13.val=%d%c%c%c", nx_val->pdm_val.temps[4], 0xff, 0xff, 0xff);
-  strcat(buf_nxt, value_c);
 	
 //	//n14.val=
 	sprintf(value_c, "n14.val=%d%c%c%c", nx_val->susp_rear.avg, 0xff, 0xff, 0xff);
   strcat(buf_nxt, value_c);
 
-	if(t == 12){
+	if(t == 30){
 		for(i=0; i<8; i++){
 			(*CAN_ramka)[0][i] = 0;
 			(*CAN_ramka)[2][i] = 0;
@@ -233,11 +214,11 @@ void AddToBuffor_R(char* buf_nxt, nextion_uart_t* nx_val, volatile bool* do_wysy
 
 void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysyl)
 {
-	char buf[120];
+	char buf[130];
 	static int n=0;
 	//dodaj parametry zapisywane na SD	
-	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20
-	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
+	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23
+	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
 	/*			1 				 	2 								3									  	 4												5					*/ 			
 	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_voltage,
 	/*			6 				   			          	7 										8				        */
@@ -249,7 +230,9 @@ void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, volatile bool* do_wysy
 	/*			15 				   				     16									     17	  		 		     */
 	nx_val->imu_data.yaw, nx_val->imu_data.pitch, nx_val->imu_data.roll,
 	/*			18 				   				     19 									     20	  		 		     */
-	nx_val->imu_data.acc_x, nx_val->imu_data.acc_y, nx_val->imu_data.acc_z);
+	nx_val->imu_data.acc_x, nx_val->imu_data.acc_y, nx_val->imu_data.acc_z,
+	/*			21 				   				     22 									     23	  		 		     */
+	nx_val->DC_curr, 			    	nx_val->id_curr, 					nx_val->iq_curr);
 	
 	strcat(buf_sd, buf);
 	n++;
@@ -315,7 +298,6 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 	if(Uart2_buf[0] == 0x65){
 		switch(Uart2_buf[2]){
 			case 0x0A:
-			//case 0x08:
 				if(NEXTION_SD == *dash_state){
 					//HAL_TIM_Base_Stop_IT(&htim2);
 					//dodaj zmienna spr stan czy napewno jest running (potwierdzenie otwarcia pliku)
@@ -330,7 +312,7 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 //					__HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
 //					HAL_TIM_Base_Start_IT(&htim2);
 				}
-			break;
+				break;
 			default: 
 				*dash_state = NEXTION_P;
 				break;
@@ -366,10 +348,10 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 					LED0_On();
 				}
 				//HAL_TIM_Base_Start_IT(&htim1);
-			break;
+				break;
 			default:
 				//*dash_page = PAGE0;
-			  break;
+				break;
 		}
 	}
 }
@@ -377,7 +359,7 @@ void Process_uart(dash_state_t* dash_state, dash_page_t* dash_page, uint8_t* Uar
 
 void SDInit(sd_card_t* sd_card)
 {
-	char nowa_nazwa[7] = "/0";
+  char nowa_nazwa[7] = "/0";
   static int nr_pliku = 1;
 	if(f_mount(&(sd_card->myFatFS), SDPath, 1) == FR_OK){
 		//wyslanie pierwszej ikonki na LCD

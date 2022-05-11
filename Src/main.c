@@ -94,11 +94,13 @@ uint8_t CAN_ramka[CAN_FRAME_COUNT][8];
 uint8_t CAN_data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 char nx_endline[3] = {0xff, 0xff, 0xff};
-char buf_nxt_p[80];
+char buf_nxt_p[100];
 char buf_nxt_r[190];
-char buf_sd[190];
-char buf_sd1[3000];
-char buf_sd2[3000];
+char buf_sd[200];
+char buf_sd1[3060];
+char buf_sd2[3060];
+
+uint8_t t1,t2,t3,t4;
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
@@ -159,7 +161,7 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);	
-HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);	
+//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);	
 
 	CAN_filterConfig();
 	CAN_filterConfig1();
@@ -176,7 +178,7 @@ HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);
 	strcpy(sd_card.SD_nazwapliku, "1.TXT\0");
 	dash_state = IDLE;
 	dash_page = PAGE0;
-			nx_val.amps=0;
+			nx_val.DC_curr=0;
 			nx_val.bat_percent=0;
 			nx_val.bat_voltage=0;
 			nx_val.controller_temp=0;
@@ -206,7 +208,7 @@ HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);
 		default:
 			IdleRun();
 			break;
-	}
+		}
 	if(dash_state == NEXTION_SD){
 		//dodawanie do bufora sd (28 linii)
 		if(sd_card.sd_add_buf){
@@ -222,8 +224,8 @@ HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, 0);
 		}
 		
 	}
-	if(nx_val.speed > 30) HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
-	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
+//	if(nx_val.speed > 30) HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
+//	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
 	
 		
     /* USER CODE END WHILE */
@@ -370,7 +372,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 7199;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 2499;
+  htim1.Init.Period = 1999;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -416,7 +418,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 7199;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 2499;
+  htim2.Init.Period = 1999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -461,7 +463,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 28799;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 3999;
+  htim3.Init.Period = 2499;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -582,29 +584,47 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	static int counter=1;
+	static int counter2=1;
 	uint32_t mailbox;
-	int ID = 0x608;
+//	int ID = 0x608;
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 10 Hz <<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 5 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
 		//dodawanie do bufora sd (28 linii)
 		sd_card.sd_add_buf = true;
+		
+		//odpytywanie SDO
+	  //Id filtereed RMS 0x09 dc bus 0x18
+//		if(counter == 1){
+			frame[1] = 0x18;
+			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+//		}
+		//Iq RMS CURRENT
+//		else if(counter == 2){
+//			frame[1] = 0x0A;
+//			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+//		}
+		
+//		counter++;
+//		if( counter == 3) counter = 1;
+		
 	}
-	//>>>>>>>>>>>>>>>TIM2-----ZAPIS SD 10 Hz<<<<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM2-----przeliczanie 5 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
 	{
 		//wywolanie funkcji przetwarzajacej dane
 		ProcessData_All(&nx_val, &CAN_ramka);
 	}
-	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE 1 HZ<<<<<<<<<<<<<<
 	if(htim->Instance == TIM3)
 	{
 		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
 		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r, &CAN_ramka);
 		
+	//odpytywanie SDO
 	//bat voltage
 		if(counter == 1){
 			frame[1] = 0x02;
@@ -620,6 +640,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			frame[1] = 0x12;
 			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
 		}
+//		//DC CURRENT
+//		else if(counter == 4){
+//			frame[1] = 0x18;
+//			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+//		}
+		
 		counter++;
 		if( counter == 4) counter = 1;
 	}
@@ -646,6 +672,18 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			//battery voltage *100
 			volt = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
 			nx_val.bat_voltage = (uint8_t) volt;
+				break;
+			case 0x09:
+			//Id filtereed RMS
+			nx_val.id_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+				break;
+			case 0x0A:
+			//Iq RMS CURRENT
+			nx_val.iq_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+				break;
+			case 0x18:
+			//DC CURRENT
+			nx_val.DC_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
 				break;
 			case 0x11:
 			//temperature

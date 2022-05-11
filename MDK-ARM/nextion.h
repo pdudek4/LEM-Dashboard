@@ -75,11 +75,13 @@ typedef struct {
 	uint8_t speed;						//
 	uint16_t rpm;
 	uint8_t power; 						//
-	uint16_t amps;
+	uint16_t DC_curr;
 	uint8_t bat_percent;			//
 	uint8_t bat_voltage;
 	uint8_t engine_temp;			//
 	uint8_t controller_temp;
+	uint16_t id_curr;
+	uint16_t iq_curr;
 	susp_t susp_front;			//
 	susp_t susp_rear;
 	pdm_t pdm_val;
