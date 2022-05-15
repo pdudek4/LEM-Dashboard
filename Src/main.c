@@ -60,8 +60,8 @@ UART_HandleTypeDef huart2;
 DMA_HandleTypeDef hdma_usart2_tx;
 
 /* USER CODE BEGIN PV */
-//static CAN_TxHeaderTypeDef CANTxh;
 static CAN_RxHeaderTypeDef CANRxh;
+CAN_TxHeaderTypeDef txCAN;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,33 +78,30 @@ static void MX_TIM2_Init(void);
 void CAN_filterConfig(void);
 void CAN_filterConfig1(void);
 
-void Heartbeat_err(uint8_t device);
+//void Heartbeat_err(uint8_t device);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-	uint32_t txmailbox;
+uint32_t txmailbox;
 	
-
-volatile bool nx_dowysylki_p;
-volatile bool nx_dowysylki_r;
-volatile bool nx_dowysylki_sd;
+bool nx_dowysylki_p;
+bool nx_dowysylki_r;
+bool nx_dowysylki_sd;
 
 uint8_t CAN_ramka[CAN_FRAME_COUNT][8];
 uint8_t CAN_data[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 char nx_endline[3] = {0xff, 0xff, 0xff};
-char buf_nxt_p[100];
-char buf_nxt_r[190];
-char buf_sd[200];
-char buf_sd1[3060];
-char buf_sd2[3060];
+char buf_nxt_p[90];
+char buf_nxt_r[140];
 
-uint8_t t1,t2,t3,t4;
+char buf_sd1[2700];
+char buf_sd2[2700];
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
-heartbeat_t heartbeat;
+
 dash_state_t dash_state = IDLE;
 dash_page_t dash_page = PAGE0;
 
@@ -112,11 +109,9 @@ uint8_t Uart2_buf_rx[10]; //odbiór z nextiona
 uint8_t Uart2_zn;
 volatile uint8_t Uart2_i;
 volatile uint8_t Uart2_ff;
-volatile bool Uart2_free = true;
+bool Uart2_free = true;
+uint8_t can_ok = 15;		//dzialanie can, dekrementacja w add to bufor 5Hz, odnowienie w can zapi[2]
 
-CAN_TxHeaderTypeDef txCAN;
-int volt;
-	int j,i;
 /* USER CODE END 0 */
 
 /**
@@ -195,38 +190,33 @@ HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
   while(1)
   {
 		switch(dash_page){
-		case PAGE2:
-		  IdleRun();
-			break;
-		case PAGE3:
-		case PAGE0:
-			Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
-			break;
-		case PAGE1:
-			Nextion_SendValue(buf_nxt_r, &nx_dowysylki_r, &Uart2_free);
-			break;
-		default:
-			IdleRun();
-			break;
+			case PAGE2:
+				IdleRun();
+				break;
+			case PAGE3:
+			case PAGE0:
+				Nextion_SendValue(buf_nxt_p, &nx_dowysylki_p, &Uart2_free);
+				break;
+			case PAGE1:
+				Nextion_SendValue(buf_nxt_r, &nx_dowysylki_r, &Uart2_free);
+				break;
+			default:
+				IdleRun();
+				break;
 		}
 	if(dash_state == NEXTION_SD){
-		//dodawanie do bufora sd (28 linii)
-		if(sd_card.sd_add_buf){
-			if(sd_card.flaga) {
-				AddToBuffor_SD(buf_sd1, &nx_val, &nx_dowysylki_sd);
-				SDZapis(&sd_card, buf_sd1, buf_sd2, &nx_dowysylki_sd);
+		if(sd_card.sd_add_buf){ 																		//co 5 Hz ustawiana ta flaga w timerze
+			if(sd_card.flaga) { 																			//rozpoznanie buf_sd1 lub buf_sd2
+				AddToBuffor_SD(buf_sd1, &nx_val, &nx_dowysylki_sd);			//dodawanie 1 linii do bufora sd1
+				SDZapis(&sd_card, buf_sd1, buf_sd2, &nx_dowysylki_sd);	//zapis na sd (25 linii), co 5 wywolanie
 			}
 			else {
-				AddToBuffor_SD(buf_sd2, &nx_val, &nx_dowysylki_sd);
-				SDZapis(&sd_card, buf_sd2, buf_sd1, &nx_dowysylki_sd);
+				AddToBuffor_SD(buf_sd2, &nx_val, &nx_dowysylki_sd);			//dodawanie 1 linii do bufora sd2
+				SDZapis(&sd_card, buf_sd2, buf_sd1, &nx_dowysylki_sd);	//zapis na sd (25 linii), co 5 wywolanie
 			}
-			sd_card.sd_add_buf  =false;
+			sd_card.sd_add_buf = false;
 		}
-		
 	}
-//	if(nx_val.speed > 30) HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 1);
-//	else HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
-	
 		
     /* USER CODE END WHILE */
 
@@ -256,9 +246,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 72;
+  RCC_OscInitStruct.PLL.PLLN = 100;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = 3;
+  RCC_OscInitStruct.PLL.PLLQ = 4;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
@@ -273,7 +263,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_3) != HAL_OK)
   {
     Error_Handler();
   }
@@ -299,13 +289,13 @@ static void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 0 */
 
   /* USER CODE BEGIN CAN1_Init 1 */
-			//8 = 250 kb/s    4 = 500 kb/s
+			//10 = 250 kb/s    5 = 500 kb/s
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
-  hcan1.Init.Prescaler = 8;
+  hcan1.Init.Prescaler = 10;
   hcan1.Init.Mode = CAN_MODE_NORMAL;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
-  hcan1.Init.TimeSeg1 = CAN_BS1_10TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_7TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
   hcan1.Init.AutoBusOff = DISABLE;
@@ -370,9 +360,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 7199;
+  htim1.Init.Prescaler = 9999;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 1999;
+  htim1.Init.Period = 399;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -416,7 +406,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 7199;
+  htim2.Init.Prescaler = 9999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 1999;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -461,9 +451,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 28799;
+  htim3.Init.Prescaler = 9999;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 2499;
+  htim3.Init.Period = 9999;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -530,7 +520,7 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Stream6_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
+  HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 1, 1);
   HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
 
 }
@@ -585,141 +575,178 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	static int counter=1;
 	static int counter2=1;
+	
+	txCAN.DLC = 8;
+	txCAN.StdId = 0x608;
+	txCAN.RTR = CAN_RTR_DATA;
+	txCAN.IDE = CAN_ID_STD;
 	uint32_t mailbox;
-//	int ID = 0x608;
+	
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//>>>>>>>>>>>>>>>TIM1-----PODSTAWOWE 5 Hz <<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM1----- 25 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
-		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
-		AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
-		//dodawanie do bufora sd (28 linii)
-		sd_card.sd_add_buf = true;
-		
 		//odpytywanie SDO
-	  //Id filtereed RMS 0x09 dc bus 0x18
-//		if(counter == 1){
-			frame[1] = 0x18;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-//		}
-		//Iq RMS CURRENT
-//		else if(counter == 2){
-//			frame[1] = 0x0A;
-//			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-//		}
+		switch(counter){
+			case 1:
+				frame[1] = ZAPI_ID_CURR;
+				break;
+			case 2:
+				frame[1] = ZAPI_IQ_CURR;
+				break;
+			case 3:
+				frame[1] = ZAPI_DC_CURR;
+				break;
+			case 4:
+				frame[1] = ZAPI_TORQUE;
+				break;
+		}
 		
-//		counter++;
-//		if( counter == 3) counter = 1;
-		
+		HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		counter++;
+		if(counter >= 5) counter = 1;
 	}
-	//>>>>>>>>>>>>>>>TIM2-----przeliczanie 5 Hz<<<<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM2----- 5 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
-	{
-		//wywolanie funkcji przetwarzajacej dane
-		ProcessData_All(&nx_val, &CAN_ramka);
+	{	
+		switch(dash_page){
+			case PAGE3:
+			case PAGE0:
+				AddToBuffor_P(buf_nxt_p, &nx_val, &nx_dowysylki_p);
+				break;
+			case PAGE1:
+				AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r);
+				break;
+			default:
+				break;
+		}
+		
+		//sprawdzenie komunikacji CAN i wyzerowanie wartosci
+		if(can_ok) can_ok--;
+		
+		if(!can_ok)
+		{
+			memset(&nx_val, 0, sizeof(nx_val));
+		}
+		
+		//dodawanie do bufora sd 1 linii
+		sd_card.sd_add_buf = true;
 	}
-	//>>>>>>>>>>>>>>>TIM3-----ROZRZSZERZONE 1 HZ<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM3-----odpytywanie rzadkie 1 HZ<<<<<<<<<<<<<<
 	if(htim->Instance == TIM3)
 	{
-		//wywolanie funkcji strcat i dodajacej dane do buf_nxt
-		AddToBuffor_R(buf_nxt_r, &nx_val, &nx_dowysylki_r, &CAN_ramka);
+		//odpytywanie SDO
+		switch(counter2){
+			case 1:
+				frame[1] = ZAPI_BAT_VOLTAGE;
+			  break;
+			case 2:
+				frame[1] = ZAPI_CONTR_TEMP;
+			  break;
+			case 3:
+				frame[1] = ZAPI_MOT_TEMP;
+			  break;
+		}
 		
-	//odpytywanie SDO
-	//bat voltage
-		if(counter == 1){
-			frame[1] = 0x02;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-	//temperature
-		else if(counter == 2){
-			frame[1] = 0x11;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-	//motor temperature
-		else if(counter == 3){
-			frame[1] = 0x12;
-			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		}
-//		//DC CURRENT
-//		else if(counter == 4){
-//			frame[1] = 0x18;
-//			HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-//		}
-		
-		counter++;
-		if( counter == 4) counter = 1;
+		HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
+		counter2++;
+		if(counter2 >= 4) counter2 = 1;
 	}
-
 }
 
 void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	int curr, temp, temps;
+	uint16_t tmp;
+	float f_tmp;
+	
 	uint32_t ID = (CAN_RI0R_STID & hcan->Instance->sFIFOMailBox[CAN_RX_FIFO0].RIR) >> CAN_TI0R_STID_Pos;
 	
-	//sprawdzanie identyfikatora odebranej wiadmosci
-	if(ID == CAN_ADR_ZAPI0){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[0]);
-		CanGetMsgData(CAN_ramka[0]);
-		nx_val.can_count = 0;
-	}
-	else if(ID == CAN_ADR_ZAPI2){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[1]);
-		CanGetMsgData(CAN_ramka[1]);
+	switch(ID){
+		case CAN_ADR_ZAPI0:
+			CanGetMsgData(CAN_ramka[0]);
+			nx_val.can_count = 0;					//w AddToBuffor_P inkrementacja, informacja o HV, komunikacji z zapim
+			CAN_ramka[0][0] &= 1;
+			nx_val.contactor = !(CAN_ramka[0][0]);
 		
-		switch (CAN_ramka[1][1]){
-			case 0x02:
-			//battery voltage *100
-			volt = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;
-			nx_val.bat_voltage = (uint8_t) volt;
-				break;
-			case 0x09:
-			//Id filtereed RMS
-			nx_val.id_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
-				break;
-			case 0x0A:
-			//Iq RMS CURRENT
-			nx_val.iq_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
-				break;
-			case 0x18:
-			//DC CURRENT
-			nx_val.DC_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
-				break;
-			case 0x11:
-			//temperature
-			nx_val.controller_temp = CAN_ramka[1][4];
-				break;
-			case 0x12:
-			//motor temperature
-			nx_val.engine_temp = CAN_ramka[1][4];
-				break;			
-		}
-	}	
-	//pot1 - rear
-	else if(ID == CAN_ADR_SENS0){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[2]);
-		CanGetMsgData(CAN_ramka[2]);
+			tmp = (CAN_ramka[0][2] << 8) + CAN_ramka[0][3];
+			nx_val.rpm = (uint16_t) tmp * 0.15f;
+			
+			tmp = (uint16_t) nx_val.rpm * 0.02358912f*0.8f;
+			nx_val.speed = (uint8_t) tmp;
+		
+		break;
+		
+		case CAN_ADR_ZAPI2:
+			can_ok = 15;
+			CanGetMsgData(CAN_ramka[1]);
+			switch (CAN_ramka[1][1]){
+				case ZAPI_BAT_VOLTAGE:
+					tmp = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]) /100;		//scale *100
+					nx_val.bat_voltage = (uint8_t) tmp;
+				
+					f_tmp = (nx_val.bat_voltage-84)*3.05;
+					nx_val.bat_percent = (uint8_t) f_tmp;
+					break;
+				
+				case ZAPI_CONTR_TEMP:
+					nx_val.controller_temp = CAN_ramka[1][4];
+					break;
+				
+				case ZAPI_MOT_TEMP:
+					nx_val.engine_temp = CAN_ramka[1][4];
+					break;	
+				
+				case ZAPI_ID_CURR:
+					nx_val.id_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+					break;
+				
+				case ZAPI_IQ_CURR:
+					nx_val.iq_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+					break;
+				
+				case ZAPI_DC_CURR:
+					nx_val.DC_curr = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+					break;
+				
+				case ZAPI_TORQUE:
+					nx_val.torque = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
+					break;
+			}
+			break;
+		
+		case CAN_ADR_SENS0:
+			CanGetMsgData(CAN_ramka[2]);	//pot1 - rear
+			nx_val.susp_rear.min = (CAN_ramka[2][1] << 8) + CAN_ramka[2][0];
+			nx_val.susp_rear.max = (CAN_ramka[2][3] << 8) + CAN_ramka[2][2];
+			nx_val.susp_rear.avg = (CAN_ramka[2][5] << 8) + CAN_ramka[2][4];
+			break;
+		
+		case CAN_ADR_SENS1:
+			CanGetMsgData(CAN_ramka[3]);	//pot2 - front
+			nx_val.susp_front.min = (CAN_ramka[3][1] << 8) + CAN_ramka[3][0];
+			nx_val.susp_front.max = (CAN_ramka[3][3] << 8) + CAN_ramka[3][2];
+			nx_val.susp_front.avg = (CAN_ramka[3][5] << 8) + CAN_ramka[3][4];
+			break;
+		
+			case CAN_ADR_SENS2:
+			CanGetMsgData(CAN_ramka[4]);	//yaw pich roll
+			nx_val.imu_data.yaw 	= (CAN_ramka[4][1] << 8) + CAN_ramka[4][0];
+			nx_val.imu_data.pitch = (CAN_ramka[4][3] << 8) + CAN_ramka[4][2];
+			nx_val.imu_data.roll 	= (CAN_ramka[4][5] << 8) + CAN_ramka[4][4];
+			break;
+		
+		case CAN_ADR_SENS3:
+			CanGetMsgData(CAN_ramka[5]);	//pdm->temps
+//			nx_val.pdm_val.status_field = CAN_ramka[6][0];	//nie uzywane obecnie
+			nx_val.pdm_val.temps[0] 		= CAN_ramka[6][1];
+			nx_val.pdm_val.temps[1] 		= CAN_ramka[6][2];
+			nx_val.pdm_val.temps[2] 		= CAN_ramka[6][3];
+			nx_val.pdm_val.temps[3] 		= CAN_ramka[6][4];
+//			nx_val.pdm_val.temps[4] 		= CAN_ramka[6][5];	//nie uzywane obecnie
+//			nx_val.pdm_val.imd_resistance = (CAN_ramka[6][7] << 8) + CAN_ramka[6][6];
+			break;
+		
 	}
-	//pot2 - front
-	else if(ID == CAN_ADR_SENS1){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[3]);
-		CanGetMsgData(CAN_ramka[3]);
-	}
-	//yaw pich roll
-	else if(ID == CAN_ADR_SENS2){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
-		CanGetMsgData(CAN_ramka[4]);
-	}// acell x y z
-	else if(ID == CAN_ADR_SENS3){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[4]);
-		CanGetMsgData(CAN_ramka[5]);
-	}
-	//pdm
-	else if(ID == CAN_ADR_PDM){
-		//HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &CANRxh, CAN_ramka[5]);
-		CanGetMsgData(CAN_ramka[6]);
-	}
-	
 }
 
 void CAN_filterConfig(void)
@@ -792,14 +819,15 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 {
 	Uart2_free = true;
 }
-
-void Heartbeat_err(uint8_t device)
+//diody na nextionie informujace o obecnosci kominukacji
+//z danych urzadzeniem
+/*void Heartbeat_err(uint8_t device)
 {
 	char buf[20];
 	sprintf(buf, "vis p%,1", device);
-	HAL_UART_Transmit_IT(&huart2, buf, 8);
+	HAL_UART_Transmit_IT(&huart2, (uint8_t*)buf, 8);
 	HAL_UART_Transmit_IT(&huart2, (uint8_t*)k, 3);	
-}
+}*/
 /* USER CODE END 4 */
 
 /**
