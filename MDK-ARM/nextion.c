@@ -149,7 +149,7 @@ void AddToBuffor_SD(char* buf_sd, nextion_uart_t* nx_val, bool* do_wysyl)
 	static int i=0;
 	//dodaj parametry zapisywane na SD	
 	//------------1  2  3  4  5  6  7  8  9  10 11 12 13 14 15 16 17 18 19 20 21 22 23 24
-	sprintf(buf, "%d %d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n", i++,
+	sprintf(buf, "%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d\r\n",
 	/*			1 				 	2 								3									  	 4												5					*/ 			
 	nx_val->speed, nx_val->rpm, nx_val->engine_temp, nx_val->controller_temp, nx_val->bat_voltage,
 	/*			6 				   			          	7 										8				        */

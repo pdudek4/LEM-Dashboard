@@ -1,1 +1,12 @@
-/MDK-ARM/Dashboard_v1/
+MDK-ARM/Dashboard_v1/
+MDK-ARM/Dashboard_v1/*.axf
+MDK-ARM/Dashboard_v1/*.hex
+MDK-ARM/Dashboard_v1/*.d
+MDK-ARM/Dashboard_v1/*.crf
+MDK-ARM/Dashboard_v1/*.elf
+MDK-ARM/Dashboard_v1/*.hex
+MDK-ARM/Dashboard_v1/*.h86
+MDK-ARM/Dashboard_v1/*.lib
+MDK-ARM/Dashboard_v1/*.obj
+MDK-ARM/Dashboard_v1/*.o
+MDK-ARM/Dashboard_v1/s*.sbr
