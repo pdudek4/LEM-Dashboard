@@ -362,7 +362,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 9999;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 399;
+  htim1.Init.Period = 499;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -583,7 +583,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint32_t mailbox;
 	
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//>>>>>>>>>>>>>>>TIM1----- 25 Hz <<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM1----- 20 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
 		//odpytywanie SDO
@@ -604,7 +604,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
 		counter++;
-		if(counter >= 5) counter = 1;
+		if(counter >= 4) counter = 1;
 	}
 	//>>>>>>>>>>>>>>>TIM2----- 5 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
@@ -622,12 +622,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 		
 		//sprawdzenie komunikacji CAN i wyzerowanie wartosci
-		if(can_ok) can_ok--;
+//		if(can_ok) can_ok--;
 		
-		if(!can_ok)
-		{
-			memset(&nx_val, 0, sizeof(nx_val));
-		}
+//		if(!can_ok)
+//		{
+//			memset(&nx_val, 0, sizeof(nx_val));
+//		}
 		
 		//dodawanie do bufora sd 1 linii
 		sd_card.sd_add_buf = true;
@@ -671,7 +671,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			tmp = (CAN_ramka[0][2] << 8) + CAN_ramka[0][3];
 			nx_val.rpm = (uint16_t) tmp * 0.15f;
 			
-			tmp = (uint16_t) nx_val.rpm * 0.02358912f*0.8f;
+//			tmp = (uint16_t) nx_val.rpm * 0.02358912f*0.8f;
+//			tmp = (uint16_t) nx_val.rpm * 0.02409101617f;
+			tmp = (uint16_t) nx_val.rpm *	0.024894050043f;
 			nx_val.speed = (uint8_t) tmp;
 		
 		break;
@@ -728,7 +730,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			nx_val.susp_front.avg = (CAN_ramka[3][5] << 8) + CAN_ramka[3][4];
 			break;
 		
-			case CAN_ADR_SENS2:
+		case CAN_ADR_SENS2:
 			CanGetMsgData(CAN_ramka[4]);	//yaw pich roll
 			nx_val.imu_data.yaw 	= (CAN_ramka[4][1] << 8) + CAN_ramka[4][0];
 			nx_val.imu_data.pitch = (CAN_ramka[4][3] << 8) + CAN_ramka[4][2];
@@ -736,7 +738,14 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 			break;
 		
 		case CAN_ADR_SENS3:
-			CanGetMsgData(CAN_ramka[5]);	//pdm->temps
+			CanGetMsgData(CAN_ramka[5]);	//yaw pich roll
+			nx_val.imu_data.acc_x = (CAN_ramka[5][1] << 8) + CAN_ramka[5][0];
+			nx_val.imu_data.acc_y = (CAN_ramka[5][3] << 8) + CAN_ramka[5][2];
+			nx_val.imu_data.acc_z	= (CAN_ramka[5][5] << 8) + CAN_ramka[5][4];
+			break;
+		
+		case CAN_ADR_PDM:
+			CanGetMsgData(CAN_ramka[6]);	//pdm->temps
 //			nx_val.pdm_val.status_field = CAN_ramka[6][0];	//nie uzywane obecnie
 			nx_val.pdm_val.temps[0] 		= CAN_ramka[6][1];
 			nx_val.pdm_val.temps[1] 		= CAN_ramka[6][2];

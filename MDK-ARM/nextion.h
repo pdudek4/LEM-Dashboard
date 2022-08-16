@@ -83,8 +83,8 @@ typedef struct {
 	uint8_t engine_temp;			//
 	uint8_t controller_temp;
 	
-	uint16_t id_curr;
-	uint16_t iq_curr;
+	int16_t id_curr;
+	int16_t iq_curr;
 	uint16_t DC_curr;
 	uint16_t torque;
 	
