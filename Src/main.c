@@ -96,8 +96,8 @@ char nx_endline[3] = {0xff, 0xff, 0xff};
 char buf_nxt_p[90];
 char buf_nxt_r[140];
 
-char buf_sd1[2700];
-char buf_sd2[2700];
+char buf_sd1[2500];
+char buf_sd2[2500];
 
 nextion_uart_t nx_val;
 sd_card_t sd_card;
@@ -162,7 +162,7 @@ HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
 	CAN_filterConfig1();
 	HAL_CAN_Start(&hcan1);
 	HAL_CAN_ActivateNotification(&hcan1, CAN_IT_RX_FIFO0_MSG_PENDING); // musi byc!!
-	HAL_TIM_Base_Start_IT(&htim1); //10 Hz docelowo, wazniejsze onformacje na dash
+	HAL_TIM_Base_Start_IT(&htim1); //5 Hz docelowo, wazniejsze onformacje na dash
 	HAL_TIM_Base_Start_IT(&htim2); //10 Hz przeliczanie
 	HAL_TIM_Base_Start_IT(&htim3); //0,5 Hz docelowo, mniej wazne info na dash
 	HAL_UART_Receive_IT(&huart2, &Uart2_zn, 1);	//odbior z nextiona
@@ -180,6 +180,8 @@ HAL_GPIO_WritePin(LED_Pin_GPIO_Port, LED_Pin_Pin, 0);
 			nx_val.engine_temp=0;
 			nx_val.rpm=0;
 			nx_val.speed=0;
+			nx_val.SDO_req=0;
+			nx_val.SDO_ans=0;
 
 	nx_val.contactor=false;
 	
@@ -346,8 +348,7 @@ static void MX_SDIO_SD_Init(void)
   * @param None
   * @retval None
   */
-static void MX_TIM1_Init(void)
-{
+static void MX_TIM1_Init(void){
 
   /* USER CODE BEGIN TIM1_Init 0 */
 
@@ -362,7 +363,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 9999;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 499;
+  htim1.Init.Period = 1999;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -583,15 +584,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint32_t mailbox;
 	
 	uint8_t frame[8] = {0x40, 0x02, 0x21, 0x00, 0x00, 0x00, 0x00, 0x00};
-	//>>>>>>>>>>>>>>>TIM1----- 20 Hz <<<<<<<<<<<<<<<
+	//>>>>>>>>>>>>>>>TIM1----- 5 Hz <<<<<<<<<<<<<<<
 	if(htim->Instance == TIM1)
 	{
 		//odpytywanie SDO
 		switch(counter){
 			case 1:
-				frame[1] = ZAPI_ID_CURR;
+				//frame[1] = ZAPI_ID_CURR;
+				frame[1] = ZAPI_DC_CURR;
 				break;
-			case 2:
+		/*	case 2:
 				frame[1] = ZAPI_IQ_CURR;
 				break;
 			case 3:
@@ -599,16 +601,18 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 				break;
 			case 4:
 				frame[1] = ZAPI_TORQUE;
-				break;
+				break;*/
 		}
 		
 		HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
-		counter++;
-		if(counter >= 4) counter = 1;
+		//counter++;
+		//if(counter >= 5) counter = 1;
+		
+			nx_val.SDO_req++;		//debug test
 	}
 	//>>>>>>>>>>>>>>>TIM2----- 5 Hz<<<<<<<<<<<<<<<<<
 	if(htim->Instance == TIM2)
-	{	
+	{
 		switch(dash_page){
 			case PAGE3:
 			case PAGE0:
@@ -651,6 +655,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_CAN_AddTxMessage(&hcan1, &txCAN, frame, &mailbox);
 		counter2++;
 		if(counter2 >= 4) counter2 = 1;
+		
+			nx_val.SDO_req++;		//debug test
 	}
 }
 
@@ -714,6 +720,8 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 					nx_val.torque = ((CAN_ramka[1][5] << 8) + CAN_ramka[1][4]);
 					break;
 			}
+			
+				nx_val.SDO_ans++;		//debug test
 			break;
 		
 		case CAN_ADR_SENS0:

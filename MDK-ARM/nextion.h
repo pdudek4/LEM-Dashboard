@@ -96,6 +96,9 @@ typedef struct {
 	bool contactor;
 	uint32_t can_count;
 	
+	uint16_t SDO_req;
+	uint16_t SDO_ans;
+	
 } nextion_uart_t;
 
 typedef struct {
